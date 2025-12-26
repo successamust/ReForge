@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+WORKDIR /runner
+
+# Install pytest for testing
+RUN pip install --no-cache-dir pytest
+
+# Create sandbox user with limited permissions
+RUN groupadd -g 1001 sandbox && \
+    useradd -u 1001 -g sandbox -s /bin/bash sandbox
+
+# Create directories for code execution
+RUN mkdir -p /sandbox && chown sandbox:sandbox /sandbox
+
+# Copy runner script
+COPY src/runners/executors/python-executor.py /runner/executor.py
+
+USER sandbox
+WORKDIR /sandbox
+
+# Default command (will be overridden)
+CMD ["python", "--version"]

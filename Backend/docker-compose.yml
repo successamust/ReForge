@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/coding-challenge
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=dev-secret-key-change-in-production
+      - RUNNER_MODE=docker
+      - DOCKER_SOCKET=/var/run/docker.sock
+    volumes:
+      - ./src:/app/src
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - app-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: npm run worker
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo:27017/coding-challenge
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RUNNER_MODE=docker
+      - DOCKER_SOCKET=/var/run/docker.sock
+    volumes:
+      - ./src:/app/src
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - app-network
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: npm run scheduler
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo:27017/coding-challenge
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SCHEDULER_INTERVAL_MINUTES=10
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
+  runner-js:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner.js
+    networks:
+      - app-network
+
+  runner-python:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner.python
+    networks:
+      - app-network
+
+  runner-java:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner.java
+    networks:
+      - app-network
+
+  runner-go:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner.go
+    networks:
+      - app-network
+
+  runner-csharp:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner.csharp
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  redis-data:

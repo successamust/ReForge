@@ -1,0 +1,170 @@
+
+> 30-day-coding-challenge-backend@1.0.0 test
+> NODE_OPTIONS='--experimental-vm-modules' jest tests/unit/progress.service.test.js
+
+(node:39729) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-12-26 02:25:27 [[32minfo[39m]: User 694de4072ec415dd02b35098 failed day 1 in javascript (first: true)
+2025-12-26 02:25:28 [[32minfo[39m]: User 694de4072ec415dd02b350a4 failed day 1 in javascript (first: true)
+2025-12-26 02:25:28 [[32minfo[39m]: User 694de4072ec415dd02b350a4 failed day 1 in javascript (first: false)
+FAIL tests/unit/progress.service.test.js (6.84 s)
+  Progress Service
+    getProgress
+      ✓ should return progress for existing language (697 ms)
+      ✓ should initialize progress for new language (545 ms)
+    advanceProgress
+      ✕ should advance to next day on success (599 ms)
+      ✕ should throw error if attempting wrong day (619 ms)
+    recordFailure
+      ✓ should set failedAt on first failure (572 ms)
+      ✓ should not reset failedAt on subsequent failures (589 ms)
+    applyRollback
+      ✕ should rollback to lastPassedDay (415 ms)
+      ✕ should rollback to day 1 if lastPassedDay is 0 (381 ms)
+      ✕ should skip rollback if adminOverride is set (352 ms)
+
+  ● Progress Service › advanceProgress › should advance to next day on success
+
+    MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
+
+      73 |
+      74 |     try {
+    > 75 |         const user = await User.findById(userId).session(session);
+         |                      ^
+      76 |         if (!user) {
+      77 |             throw new NotFoundError('User');
+      78 |         }
+
+      at Connection.sendCommand (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:559:17)
+      at Connection.command (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:633:22)
+      at Server.command (node_modules/mongoose/node_modules/mongodb/src/sdam/server.ts:350:21)
+      at tryOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:289:24)
+      at executeOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:119:12)
+      at FindCursor._initialize (node_modules/mongoose/node_modules/mongodb/src/cursor/find_cursor.ts:92:22)
+      at FindCursor.cursorInit (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:949:21)
+      at FindCursor.fetchBatch (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:987:7)
+      at FindCursor.next (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:608:9)
+      at Collection.findOne (node_modules/mongoose/node_modules/mongodb/src/collection.ts:552:20)
+      at model.Query._findOne (node_modules/mongoose/lib/query.js:2710:15)
+      at model.Query.exec (node_modules/mongoose/lib/query.js:4627:63)
+      at Module.advanceProgress (src/services/progress.service.js:75:22)
+      at Object.<anonymous> (tests/unit/progress.service.test.js:46:28)
+
+  ● Progress Service › advanceProgress › should throw error if attempting wrong day
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected pattern: /Cannot advance/
+    Received message: "Transaction numbers are only allowed on a replica set member or mongos"
+
+          73 |
+          74 |     try {
+        > 75 |         const user = await User.findById(userId).session(session);
+             |                      ^
+          76 |         if (!user) {
+          77 |             throw new NotFoundError('User');
+          78 |         }
+
+      at Connection.sendCommand (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:559:17)
+      at Connection.command (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:633:22)
+      at Server.command (node_modules/mongoose/node_modules/mongodb/src/sdam/server.ts:350:21)
+      at tryOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:289:24)
+      at executeOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:119:12)
+      at FindCursor._initialize (node_modules/mongoose/node_modules/mongodb/src/cursor/find_cursor.ts:92:22)
+      at FindCursor.cursorInit (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:949:21)
+      at FindCursor.fetchBatch (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:987:7)
+      at FindCursor.next (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:608:9)
+      at Collection.findOne (node_modules/mongoose/node_modules/mongodb/src/collection.ts:552:20)
+      at model.Query._findOne (node_modules/mongoose/lib/query.js:2710:15)
+      at model.Query.exec (node_modules/mongoose/lib/query.js:4627:63)
+      at Module.advanceProgress (src/services/progress.service.js:75:22)
+      at Object.<anonymous> (tests/unit/progress.service.test.js:54:13)
+      at Object.toThrow (node_modules/expect/build/index.js:218:22)
+      at Object.<anonymous> (tests/unit/progress.service.test.js:56:23)
+
+  ● Progress Service › applyRollback › should rollback to lastPassedDay
+
+    MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
+
+      243 |
+      244 |     try {
+    > 245 |         const user = await User.findById(userId).session(session);
+          |                      ^
+      246 |         if (!user) {
+      247 |             throw new NotFoundError('User');
+      248 |         }
+
+      at Connection.sendCommand (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:559:17)
+      at Connection.command (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:633:22)
+      at Server.command (node_modules/mongoose/node_modules/mongodb/src/sdam/server.ts:350:21)
+      at tryOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:289:24)
+      at executeOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:119:12)
+      at FindCursor._initialize (node_modules/mongoose/node_modules/mongodb/src/cursor/find_cursor.ts:92:22)
+      at FindCursor.cursorInit (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:949:21)
+      at FindCursor.fetchBatch (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:987:7)
+      at FindCursor.next (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:608:9)
+      at Collection.findOne (node_modules/mongoose/node_modules/mongodb/src/collection.ts:552:20)
+      at model.Query._findOne (node_modules/mongoose/lib/query.js:2710:15)
+      at model.Query.exec (node_modules/mongoose/lib/query.js:4627:63)
+      at Module.applyRollback (src/services/progress.service.js:245:22)
+      at Object.<anonymous> (tests/unit/progress.service.test.js:110:28)
+
+  ● Progress Service › applyRollback › should rollback to day 1 if lastPassedDay is 0
+
+    MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
+
+      243 |
+      244 |     try {
+    > 245 |         const user = await User.findById(userId).session(session);
+          |                      ^
+      246 |         if (!user) {
+      247 |             throw new NotFoundError('User');
+      248 |         }
+
+      at Connection.sendCommand (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:559:17)
+      at Connection.command (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:633:22)
+      at Server.command (node_modules/mongoose/node_modules/mongodb/src/sdam/server.ts:350:21)
+      at tryOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:289:24)
+      at executeOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:119:12)
+      at FindCursor._initialize (node_modules/mongoose/node_modules/mongodb/src/cursor/find_cursor.ts:92:22)
+      at FindCursor.cursorInit (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:949:21)
+      at FindCursor.fetchBatch (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:987:7)
+      at FindCursor.next (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:608:9)
+      at Collection.findOne (node_modules/mongoose/node_modules/mongodb/src/collection.ts:552:20)
+      at model.Query._findOne (node_modules/mongoose/lib/query.js:2710:15)
+      at model.Query.exec (node_modules/mongoose/lib/query.js:4627:63)
+      at Module.applyRollback (src/services/progress.service.js:245:22)
+      at Object.<anonymous> (tests/unit/progress.service.test.js:136:28)
+
+  ● Progress Service › applyRollback › should skip rollback if adminOverride is set
+
+    MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
+
+      243 |
+      244 |     try {
+    > 245 |         const user = await User.findById(userId).session(session);
+          |                      ^
+      246 |         if (!user) {
+      247 |             throw new NotFoundError('User');
+      248 |         }
+
+      at Connection.sendCommand (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:559:17)
+      at Connection.command (node_modules/mongoose/node_modules/mongodb/src/cmap/connection.ts:633:22)
+      at Server.command (node_modules/mongoose/node_modules/mongodb/src/sdam/server.ts:350:21)
+      at tryOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:289:24)
+      at executeOperation (node_modules/mongoose/node_modules/mongodb/src/operations/execute_operation.ts:119:12)
+      at FindCursor._initialize (node_modules/mongoose/node_modules/mongodb/src/cursor/find_cursor.ts:92:22)
+      at FindCursor.cursorInit (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:949:21)
+      at FindCursor.fetchBatch (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:987:7)
+      at FindCursor.next (node_modules/mongoose/node_modules/mongodb/src/cursor/abstract_cursor.ts:608:9)
+      at Collection.findOne (node_modules/mongoose/node_modules/mongodb/src/collection.ts:552:20)
+      at model.Query._findOne (node_modules/mongoose/lib/query.js:2710:15)
+      at model.Query.exec (node_modules/mongoose/lib/query.js:4627:63)
+      at Module.applyRollback (src/services/progress.service.js:245:22)
+      at Object.<anonymous> (tests/unit/progress.service.test.js:155:28)
+
+Test Suites: 1 failed, 1 total
+Tests:       5 failed, 4 passed, 9 total
+Snapshots:   0 total
+Time:        6.876 s
+Ran all test suites matching /tests\/unit\/progress.service.test.js/i.
