@@ -1,32 +1,31 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { CodeFile, AwardMedal, CodeTerminal } from './icons/CustomIcons';
-import Button from './ui/Button';
+import React, { useState, useEffect, useContext } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { CodeFile, AwardMedal, CodeTerminal, CodeShield } from './icons/CustomIcons';
 import { AppContext } from '../context/AppContext';
+import Button from './ui/Button';
 
-// Alphabet Cycling Decoding Animation - All letters together
+// Constants outside component
+const TARGET_TEXT = "Forge";
+const FORGE_LETTERS = TARGET_TEXT.split('');
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+// Alphabet Cycling Decoding Animation
 const AnimatedLogo = () => {
+    // Add state to track hover
     const [isHovered, setIsHovered] = useState(false);
-    const [currentIndex, setCurrentIndex] = useState(0);
 
-    const forgeLetters = ['F', 'o', 'r', 'g', 'e'];
-    const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-
-    // Get target index for each letter (case-insensitive)
-    const getTargetIndex = (letter) => {
-        const lowerLetter = letter.toLowerCase();
-        return alphabet.indexOf(lowerLetter);
-    };
-
-    const targetIndices = useMemo(() => forgeLetters.map(getTargetIndex), []);
+    const targetIndices = FORGE_LETTERS.map(l => GLYPHS.indexOf(l));
     const maxTargetIndex = Math.max(...targetIndices);
+
+    // Animation state
+    const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
         if (isHovered) {
             // Reset to start
-            setCurrentIndex(0);
-            
+            setTimeout(() => setCurrentIndex(0), 0);
+
             // Animate all letters together
             const interval = setInterval(() => {
                 setCurrentIndex(prev => {
@@ -39,13 +38,13 @@ const AnimatedLogo = () => {
                     }
                 });
             }, 30); // Faster animation speed
-            
+
             return () => {
                 clearInterval(interval);
             };
         } else {
             // Instantly reset when mouse leaves
-            setCurrentIndex(0);
+            setTimeout(() => setCurrentIndex(0), 0);
         }
     }, [isHovered, maxTargetIndex]);
 
@@ -54,17 +53,17 @@ const AnimatedLogo = () => {
         if (!isHovered) {
             return originalLetter; // Normal state
         }
-        
+
         const targetIndex = targetIndices[index];
-        
+
         // Show current letter in alphabet cycle, but only up to its target
         if (currentIndex <= targetIndex) {
-            const char = alphabet[currentIndex];
+            const char = GLYPHS[currentIndex] || originalLetter;
             // Capitalize if original was uppercase
             return originalLetter === originalLetter.toUpperCase() ? char.toUpperCase() : char;
         } else {
             // Already reached target, show target letter
-            const char = alphabet[targetIndex];
+            const char = GLYPHS[targetIndex] || originalLetter;
             return originalLetter === originalLetter.toUpperCase() ? char.toUpperCase() : char;
         }
     };
@@ -79,25 +78,25 @@ const AnimatedLogo = () => {
             <span className="text-white font-black tracking-tighter text-xl leading-none">
                 Re
             </span>
-            
+
             {/* Forge part - alphabet cycling animation */}
             <span className="relative inline-flex">
-                {forgeLetters.map((letter, i) => {
+                {FORGE_LETTERS.map((letter, i) => {
                     const displayChar = getDisplayChar(letter, i);
                     const targetIndex = targetIndices[i];
                     const isDecoding = isHovered && currentIndex < targetIndex;
                     const hasReachedTarget = isHovered && currentIndex >= targetIndex;
-                    
+
                     return (
                         <motion.span
                             key={`${i}-${currentIndex}`}
                             className="inline-block font-black tracking-tighter text-xl font-mono"
                             animate={{
-                                color: isDecoding 
+                                color: isDecoding
                                     ? '#00ffff'
                                     : hasReachedTarget
-                                    ? '#ffffff'
-                                    : '#ffffff',
+                                        ? '#ffffff'
+                                        : '#ffffff',
                             }}
                             transition={{
                                 duration: 0.05,
@@ -128,7 +127,7 @@ const AnimatedLogo = () => {
 };
 
 const Navbar = () => {
-    const navigate = useNavigate();
+    // navigate unused
     const { isAuthenticated, user, logout } = useContext(AppContext);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -143,6 +142,7 @@ const Navbar = () => {
         { name: 'Lessons', href: '/lessons', icon: CodeFile },
         { name: 'Leaderboard', href: '/leaderboard', icon: AwardMedal },
         { name: 'Dashboard', href: '/dashboard', icon: CodeTerminal, auth: true },
+        { name: 'Admin', href: '/admin', icon: CodeShield, auth: true, adminOnly: true },
     ];
 
     return (
@@ -165,11 +165,12 @@ const Navbar = () => {
                     <div className="flex items-center gap-6 mr-6 border-r border-white/10 pr-6">
                         {navLinks
                             .filter(link => !link.auth || isAuthenticated)
+                            .filter(link => !link.adminOnly || user?.role === 'admin')
                             .map((link) => (
                                 <Link
                                     key={link.name}
                                     to={link.href}
-                                    className="text-gray-400 hover:text-white text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2"
+                                    className="text-white/40 hover:text-white text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2"
                                 >
                                     <link.icon size={16} />
                                     {link.name}
@@ -229,12 +230,13 @@ const Navbar = () => {
                         <div className="px-6 py-8 flex flex-col gap-6">
                             {navLinks
                                 .filter(link => !link.auth || isAuthenticated)
+                                .filter(link => !link.adminOnly || user?.role === 'admin')
                                 .map((link) => (
                                     <Link
                                         key={link.name}
                                         to={link.href}
                                         onClick={() => setIsMobileMenuOpen(false)}
-                                        className="flex items-center justify-between text-gray-400 font-black uppercase tracking-widest text-sm hover:text-white transition-colors"
+                                        className="flex items-center justify-between text-white/40 font-black uppercase tracking-widest text-sm hover:text-white transition-colors"
                                     >
                                         <div className="flex items-center gap-4">
                                             <link.icon size={18} className="text-white" />

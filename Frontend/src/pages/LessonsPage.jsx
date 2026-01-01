@@ -31,18 +31,16 @@ const LessonCard = ({ day, lesson, status, selectedLanguage }) => {
         <motion.div
             ref={cardRef}
             style={{ y: cardY, opacity: cardOpacity, position: 'relative' }}
-            className={`bg-black p-6 border border-white/10 h-32 flex flex-col justify-between transition-all ${
-                isLocked ? 'opacity-30' : 'hover:bg-white/[0.02]'
-            }`}
+            className={`bg-black p-6 border border-white/10 h-32 flex flex-col justify-between transition-all ${isLocked ? 'opacity-30' : 'hover:bg-white/[0.02]'
+                }`}
         >
             <Link
                 to={`/lessons/${selectedLanguage}/${day}`}
                 className={`block h-full flex flex-col justify-between ${isLocked ? 'pointer-events-none cursor-not-allowed' : 'cursor-pointer'}`}
             >
                 <div className="flex justify-between items-start">
-                    <span className={`text-xs font-black tracking-tight ${
-                        isActive ? 'text-white' : isCompleted ? 'text-white' : 'text-white/30'
-                    }`}>
+                    <span className={`text-xs font-black tracking-tight ${isActive ? 'text-white' : isCompleted ? 'text-white' : 'text-white/30'
+                        }`}>
                         D{day < 10 ? `0${day}` : day}
                     </span>
                     {isCompleted ? (
@@ -57,9 +55,8 @@ const LessonCard = ({ day, lesson, status, selectedLanguage }) => {
                 <div>
                     <div className="w-full h-px bg-white/5 mb-2">
                         <motion.div
-                            className={`h-full ${
-                                isCompleted ? 'bg-white' : isActive ? 'bg-white' : 'bg-transparent'
-                            }`}
+                            className={`h-full ${isCompleted ? 'bg-white' : isActive ? 'bg-white' : 'bg-transparent'
+                                }`}
                             initial={{ width: 0 }}
                             whileInView={{
                                 width: isCompleted ? '100%' : isActive ? '50%' : '0%'
@@ -68,9 +65,8 @@ const LessonCard = ({ day, lesson, status, selectedLanguage }) => {
                             transition={{ duration: 0.5 }}
                         />
                     </div>
-                    <p className={`text-[10px] font-bold uppercase truncate ${
-                        isActive || isCompleted ? 'text-white' : 'text-white/30'
-                    }`}>
+                    <p className={`text-[10px] font-bold uppercase truncate ${isActive || isCompleted ? 'text-white' : 'text-white/30'
+                        }`}>
                         {lesson?.title || `Day ${day}`}
                     </p>
                 </div>
@@ -86,38 +82,33 @@ const LessonsPage = () => {
     const [progress, setProgress] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadLessons();
-        loadProgress();
-    }, [selectedLanguage]);
-
-    const loadLessons = async () => {
+    const loadLessons = React.useCallback(async () => {
         try {
             setLoading(true);
             const response = await lessonService.getLessonsByLanguage(selectedLanguage);
-            // API interceptor returns response.data, so response is already { success, data }
             const lessonsData = response?.data || response || [];
             setLessons(Array.isArray(lessonsData) ? lessonsData : []);
-        } catch (error) {
-            console.error('Failed to load lessons:', error);
+        } catch {
+            // Error handled by context
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedLanguage]);
 
-    const loadProgress = async () => {
+    const loadProgress = React.useCallback(async () => {
         try {
             const response = await progressService.getProgressByLanguage(selectedLanguage);
-            // API interceptor returns response.data, so response is already { success, data }
-            // The progress object is nested: { success: true, data: { progress: {...} } }
             const progressData = response?.data?.progress || response?.progress || response?.data || response;
             setProgress(progressData);
-        } catch (error) {
-            // User might not be authenticated or progress doesn't exist yet
-            // Day 1 will be unlocked by getLessonStatus logic
+        } catch {
             setProgress(null);
         }
-    };
+    }, [selectedLanguage]);
+
+    useEffect(() => {
+        loadLessons();
+        loadProgress();
+    }, [loadLessons, loadProgress]);
 
     const getLessonStatus = (day) => {
         // If no progress exists, day 1 should be active (unlocked) for new users
@@ -127,10 +118,6 @@ const LessonsPage = () => {
         if (day < progress.currentDay) return 'completed';
         if (day === progress.currentDay) return 'active';
         return 'locked';
-    };
-
-    const getCurrentDay = () => {
-        return progress?.currentDay || 1;
     };
 
     const ref = useRef(null);
@@ -171,11 +158,10 @@ const LessonsPage = () => {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setSelectedLanguage(lang.id)}
-                            className={`px-6 py-3 font-bold uppercase tracking-widest text-sm transition-all border ${
-                                selectedLanguage === lang.id
-                                    ? 'bg-white text-black border-white'
-                                    : 'bg-white/[0.02] text-white/60 border-white/10 hover:border-white/20 hover:text-white'
-                            }`}
+                            className={`px-6 py-3 font-bold uppercase tracking-widest text-sm transition-all border ${selectedLanguage === lang.id
+                                ? 'bg-white text-black border-white'
+                                : 'bg-white/[0.02] text-white/60 border-white/10 hover:border-white/20 hover:text-white'
+                                }`}
                         >
                             {lang.name}
                         </motion.button>

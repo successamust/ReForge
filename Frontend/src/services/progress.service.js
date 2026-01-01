@@ -7,6 +7,14 @@ export const progressService = {
 
   async getProgressByLanguage(language) {
     return api.get(`/progress/${language}`);
+  },
+
+  async getAchievements() {
+    return api.get('/progress/achievements');
+  },
+
+  async generateCertificate(language) {
+    return api.post(`/progress/${language}/certificate/generate`);
   }
 };
 

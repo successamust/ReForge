@@ -278,6 +278,9 @@ export async function getUserById(userId) {
     if (!user) {
         throw new AuthenticationError('User not found');
     }
+    if (!user.isActive) {
+        throw new AuthenticationError('Account is deactivated');
+    }
     return user;
 }
 

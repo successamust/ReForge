@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/auth.service';
 
@@ -35,8 +36,8 @@ export const AppProvider = ({ children }) => {
         setIsSessionActive(true);
         addNotification({
             type: 'success',
-            title: 'Session Synchronized',
-            message: 'Entering Manual Mode. AI assistance disabled.'
+            title: 'Protocol Active',
+            message: 'Entering Manual Mode. Automated assistance disabled.'
         });
     };
 

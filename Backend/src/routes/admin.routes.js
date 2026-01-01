@@ -162,6 +162,17 @@ router.get('/users/:id', adminController.getUser);
 
 /**
  * @swagger
+ * /v1/admin/users/{id}:
+ *   put:
+ *     summary: Update user (role, status)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/users/:id', adminController.updateUser);
+
+/**
+ * @swagger
  * /v1/admin/users/{id}/achievements:
  *   get:
  *     summary: Get user achievements (admin only)

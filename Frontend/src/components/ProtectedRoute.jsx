@@ -2,8 +2,8 @@ import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 
-const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, loading } = useContext(AppContext);
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
+    const { isAuthenticated, loading, user } = useContext(AppContext);
 
     if (loading) {
         return (
@@ -13,7 +13,15 @@ const ProtectedRoute = ({ children }) => {
         );
     }
 
-    return isAuthenticated ? children : <Navigate to="/login" replace />;
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (requireAdmin && user?.role !== 'admin') {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
 };
 
 export default ProtectedRoute;

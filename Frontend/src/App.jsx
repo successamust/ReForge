@@ -9,27 +9,39 @@ import Hero from './components/sections/Hero';
 import IDEPreview from './components/sections/IDEPreview';
 import Dashboard from './components/sections/Dashboard';
 import FeatureGrid from './components/sections/FeatureGrid';
+import SocialProof from './components/sections/SocialProof';
+import FAQ from './components/sections/FAQ';
+import Pricing from './components/sections/Pricing';
 
-// Pages
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import OAuthCallbackPage from './pages/OAuthCallbackPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import EmailVerificationPage from './pages/EmailVerificationPage';
-import LessonsPage from './pages/LessonsPage';
-import LessonDetailPage from './pages/LessonDetailPage';
-import UserDashboardPage from './pages/UserDashboardPage';
-import LeaderboardPage from './pages/LeaderboardPage';
-import ProfilePage from './pages/ProfilePage';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+
+// Pages - Lazy Loaded
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
+const OAuthCallbackPage = React.lazy(() => import('./pages/OAuthCallbackPage'));
+const ForgotPasswordPage = React.lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'));
+const EmailVerificationPage = React.lazy(() => import('./pages/EmailVerificationPage'));
+const LessonsPage = React.lazy(() => import('./pages/LessonsPage'));
+const LessonDetailPage = React.lazy(() => import('./pages/LessonDetailPage'));
+const UserDashboardPage = React.lazy(() => import('./pages/UserDashboardPage'));
+const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage'));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
+const AdminDashboardPage = React.lazy(() => import('./pages/AdminDashboardPage'));
+const AdminUsersPage = React.lazy(() => import('./pages/AdminUsersPage'));
+const AdminAuditLogsPage = React.lazy(() => import('./pages/AdminAuditLogsPage'));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 
 function HomePage() {
   return (
     <>
       <Hero />
+      <SocialProof />
       <FeatureGrid />
       <IDEPreview />
       <Dashboard />
+      <Pricing />
+      <FAQ />
     </>
   );
 }
@@ -38,52 +50,79 @@ function App() {
   return (
     <AppProvider>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <MainLayout>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/auth/success" element={<OAuthCallbackPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/verify-email" element={<EmailVerificationPage />} />
-            <Route path="/lessons" element={<LessonsPage />} />
-            <Route path="/lessons/:language" element={<LessonsPage />} />
-            <Route 
-                path="/lessons/:language/:day" 
+        <MainLayout>
+          <React.Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/auth/success" element={<OAuthCallbackPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<EmailVerificationPage />} />
+              <Route path="/lessons" element={<LessonsPage />} />
+              <Route path="/lessons/:language" element={<LessonsPage />} />
+              <Route
+                path="/lessons/:language/:day"
                 element={
-                    <ProtectedRoute>
-                        <LessonDetailPage />
-                    </ProtectedRoute>
-                } 
-            />
-            <Route 
-                path="/dashboard" 
+                  <ProtectedRoute>
+                    <LessonDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
                 element={
-                    <ProtectedRoute>
-                        <UserDashboardPage />
-                    </ProtectedRoute>
-                } 
-            />
-            <Route 
-                path="/leaderboard" 
+                  <ProtectedRoute>
+                    <UserDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/leaderboard"
                 element={
-                    <ProtectedRoute>
-                        <LeaderboardPage />
-                    </ProtectedRoute>
-                } 
-            />
-            <Route 
-                path="/profile" 
+                  <ProtectedRoute>
+                    <LeaderboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
                 element={
-                    <ProtectedRoute>
-                        <ProfilePage />
-                    </ProtectedRoute>
-                } 
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-      </MainLayout>
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminUsersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/logs"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminAuditLogsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </React.Suspense>
+        </MainLayout>
       </Router>
     </AppProvider>
   );

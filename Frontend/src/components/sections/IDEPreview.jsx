@@ -30,8 +30,8 @@ const IDEPreview = () => {
             setOutput(prev => [
                 ...prev,
                 { type: 'info', text: '[recon] verifying logic flow...' },
-                { type: 'success', text: '✓ ALGORITHM SYNCHRONIZED. NO AI RESIDUE DETECTED.' },
-                { type: 'success', text: 'GRADIENT_ACCURACY: 98.4%' }
+                { type: 'success', text: '✓ ALGORITHM SYNCHRONIZED. COMPONENT STABLE.' },
+                { type: 'success', text: 'EXECUTION_ACCURACY: 98.4%' }
             ]);
             setIsRunning(false);
         }, 2000);
@@ -43,7 +43,7 @@ const IDEPreview = () => {
     ];
 
     const codeData = `// SESSION: Manual Pointer Reconstruction
-// OBJECTIVE: Implement Ring Buffer without assist providers.
+// OBJECTIVE: Implement Ring Buffer from first principles.
 
 package rehab_core
 
@@ -81,7 +81,7 @@ func (s *SyncBuffer) Push(b byte) {
                         style={{ y: containerY, opacity: containerOpacity }}
                     >
                         <div className="inline-flex items-center gap-3 px-4 py-2 border border-white/10 bg-white/[0.02] mb-8">
-                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                            <div className="w-1.5 h-1.5 bg-white rounded-none" />
                             <span className="text-[10px] font-mono text-white/60 tracking-[0.3em] uppercase">
                                 Curriculum Module 01
                             </span>
@@ -90,13 +90,13 @@ func (s *SyncBuffer) Push(b byte) {
                             Algorithm Reconstruction
                         </h2>
                         <p className="text-white/60 font-light text-lg leading-relaxed max-w-lg mb-12">
-                            Break the habit of copy-pasting. We strip away the LLM and force you to rebuild core data structures from first principles. Reclaim your technical autonomy.
+                            Break the habit of automated dependence. We strip away the assistance and force you to rebuild core data structures from the ground up. Reclaim your technical autonomy.
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5">
                             {[
-                                { title: 'No Autocomplete', desc: 'Syntax is memory.' },
-                                { title: 'Logic Synthesis', desc: 'Pointers over Prompts.' }
+                                { title: 'No Autocomplete', desc: 'Syntax is structural.' },
+                                { title: 'Logic Synthesis', desc: 'First Principles Only.' }
                             ].map((item, i) => (
                                 <div key={i} className="bg-black p-6 border border-white/10">
                                     <h4 className="text-white font-bold uppercase text-xs tracking-widest mb-2">{item.title}</h4>
@@ -116,11 +116,10 @@ func (s *SyncBuffer) Push(b byte) {
                                     <button
                                         key={file.name}
                                         onClick={() => setActiveTab(file.name)}
-                                        className={`flex items-center gap-2 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors ${
-                                            activeTab === file.name 
-                                                ? 'text-white border-b-2 border-white' 
-                                                : 'text-white/40 hover:text-white/60'
-                                        }`}
+                                        className={`flex items-center gap-2 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors ${activeTab === file.name
+                                            ? 'text-white border-b-2 border-white'
+                                            : 'text-white/40 hover:text-white/60'
+                                            }`}
                                     >
                                         <file.icon size={14} className="text-white" />
                                         {file.name}
@@ -162,7 +161,7 @@ func (s *SyncBuffer) Push(b byte) {
                                     >
                                         <div>
                                             <p className="text-white font-black uppercase tracking-[0.2em] mb-4">Manual Mode Locked</p>
-                                            <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Initiate detox to unlock workstation.</p>
+                                            <p className="text-white/20 text-[10px] uppercase font-bold tracking-widest">Initiate detox to unlock workstation.</p>
                                         </div>
                                     </motion.div>
                                 )}

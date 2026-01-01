@@ -91,22 +91,28 @@ body {
 
 /* Glitch/Chromatic Aberration Effect */
 @keyframes glitch {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate(0);
     filter: hue-rotate(0deg);
   }
+
   20% {
     transform: translate(-1px, 1px);
     filter: hue-rotate(90deg);
   }
+
   40% {
     transform: translate(-1px, -1px);
     filter: hue-rotate(180deg);
   }
+
   60% {
     transform: translate(1px, 1px);
     filter: hue-rotate(270deg);
   }
+
   80% {
     transform: translate(1px, -1px);
     filter: hue-rotate(360deg);
@@ -147,82 +153,102 @@ body {
     clip: rect(31px, 9999px, 94px, 0);
     transform: skew(0.5deg);
   }
+
   5% {
     clip: rect(75px, 9999px, 100px, 0);
     transform: skew(0.5deg);
   }
+
   10% {
     clip: rect(99px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   15% {
     clip: rect(54px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   20% {
     clip: rect(88px, 9999px, 99px, 0);
     transform: skew(0.5deg);
   }
+
   25% {
     clip: rect(31px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   30% {
     clip: rect(54px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   35% {
     clip: rect(88px, 9999px, 99px, 0);
     transform: skew(0.5deg);
   }
+
   40% {
     clip: rect(31px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   45% {
     clip: rect(54px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   50% {
     clip: rect(88px, 9999px, 99px, 0);
     transform: skew(0.5deg);
   }
+
   55% {
     clip: rect(31px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   60% {
     clip: rect(54px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   65% {
     clip: rect(88px, 9999px, 99px, 0);
     transform: skew(0.5deg);
   }
+
   70% {
     clip: rect(31px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   75% {
     clip: rect(54px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   80% {
     clip: rect(88px, 9999px, 99px, 0);
     transform: skew(0.5deg);
   }
+
   85% {
     clip: rect(31px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   90% {
     clip: rect(54px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   95% {
     clip: rect(88px, 9999px, 99px, 0);
     transform: skew(0.5deg);
   }
+
   100% {
     clip: rect(31px, 9999px, 85px, 0);
     transform: skew(0.5deg);
@@ -234,84 +260,248 @@ body {
     clip: rect(65px, 9999px, 100px, 0);
     transform: skew(0.5deg);
   }
+
   5% {
     clip: rect(96px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   10% {
     clip: rect(25px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   15% {
     clip: rect(90px, 9999px, 10px, 0);
     transform: skew(0.5deg);
   }
+
   20% {
     clip: rect(65px, 9999px, 100px, 0);
     transform: skew(0.5deg);
   }
+
   25% {
     clip: rect(96px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   30% {
     clip: rect(25px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   35% {
     clip: rect(90px, 9999px, 10px, 0);
     transform: skew(0.5deg);
   }
+
   40% {
     clip: rect(65px, 9999px, 100px, 0);
     transform: skew(0.5deg);
   }
+
   45% {
     clip: rect(96px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   50% {
     clip: rect(25px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   55% {
     clip: rect(90px, 9999px, 10px, 0);
     transform: skew(0.5deg);
   }
+
   60% {
     clip: rect(65px, 9999px, 100px, 0);
     transform: skew(0.5deg);
   }
+
   65% {
     clip: rect(96px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   70% {
     clip: rect(25px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   75% {
     clip: rect(90px, 9999px, 10px, 0);
     transform: skew(0.5deg);
   }
+
   80% {
     clip: rect(65px, 9999px, 100px, 0);
     transform: skew(0.5deg);
   }
+
   85% {
     clip: rect(96px, 9999px, 85px, 0);
     transform: skew(0.5deg);
   }
+
   90% {
     clip: rect(25px, 9999px, 50px, 0);
     transform: skew(0.5deg);
   }
+
   95% {
     clip: rect(90px, 9999px, 10px, 0);
     transform: skew(0.5deg);
   }
+
   100% {
     clip: rect(65px, 9999px, 100px, 0);
     transform: skew(0.5deg);
   }
+}
+
+/* Lesson Page Enhancements */
+@layer components {
+  .lesson-prose {
+    @apply text-white/80 font-light leading-relaxed;
+  }
+
+  .lesson-prose h2 {
+    @apply text-xl font-bold text-white mt-6 mb-3;
+  }
+
+  .lesson-prose h3 {
+    @apply text-lg font-bold text-white mt-4 mb-2;
+  }
+
+  .lesson-prose p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  .lesson-prose ul,
+  .lesson-prose ol {
+    @apply ml-6 mb-4 space-y-2;
+  }
+
+  .lesson-prose li {
+    @apply leading-relaxed;
+  }
+
+  .lesson-prose strong {
+    @apply text-white font-semibold;
+  }
+
+  .lesson-prose code {
+    @apply px-2 py-0.5 bg-white/10 text-purple-300 rounded text-sm font-mono;
+  }
+
+  .lesson-prose pre {
+    @apply bg-[#1e1e1e] p-4 rounded overflow-x-auto mb-4 border border-white/10;
+  }
+
+  .lesson-prose pre code {
+    @apply bg-transparent p-0 text-white/90;
+  }
+}
+
+/* Celebration Animation */
+@keyframes celebrate {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+.celebration {
+  animation: celebrate 0.6s ease-in-out;
+}
+
+/* Pulse animation for active elements */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 20px 10px rgba(168, 85, 247, 0);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Section transitions */
+.section-fade-in {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Code block hover effect */
+.code-block-hover {
+  transition: all 0.3s ease;
+}
+
+.code-block-hover:hover {
+  transform: translateY(-2px);
+}
+
+/* Reading progress indicator */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #a855f7, #ec4899, #a855f7);
+  background-size: 200% 100%;
+  animation: gradient-shift 3s linear infinite;
+  z-index: 9999;
+  transition: width 0.1s ease-out;
+}
+
+/* Confetti particles */
+@keyframes confetti-fall {
+  to {
+    transform: translateY(100vh) rotate(360deg);
+  }
+}
+
+.confetti-particle {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(45deg, #a855f7, #ec4899);
+  animation: confetti-fall 3s linear;
+  pointer-events: none;
+  z-index: 9999;
 }

@@ -22,7 +22,7 @@ const CourseRoadmap = () => {
                         </h2>
                     </div>
                     <div className="text-right hidden md:block">
-                        <p className="text-gray-500 font-bold text-sm uppercase tracking-widest mb-2">Completion Rate</p>
+                        <p className="text-white/40 font-bold text-sm uppercase tracking-widest mb-2">Completion Rate</p>
                         <p className="text-white text-3xl font-black tracking-tighter">16%</p>
                     </div>
                 </div>
@@ -42,7 +42,7 @@ const CourseRoadmap = () => {
                                     }`}
                             >
                                 <div className="flex justify-between items-start">
-                                    <span className={`text-xs font-black italic tracking-tighter ${day.status === 'active' ? 'text-white' : 'text-gray-500'
+                                    <span className={`text-xs font-black italic tracking-tighter ${day.status === 'active' ? 'text-white' : 'text-white/20'
                                         }`}>
                                         D{day.day < 10 ? `0${day.day}` : day.day}
                                     </span>
@@ -51,19 +51,19 @@ const CourseRoadmap = () => {
                                     ) : day.status === 'active' ? (
                                         <PlayCircle size={14} className="text-white animate-pulse" />
                                     ) : (
-                                        <Lock size={14} className="text-gray-700" />
+                                        <Lock size={14} className="text-white/20" />
                                     )}
                                 </div>
 
                                 <div>
-                                    <div className={`w-full h-1 rounded-full mb-2 ${day.status === 'completed' ? 'bg-green-500/20' :
-                                            day.status === 'active' ? 'bg-white/20' : 'bg-white/5'
+                                    <div className={`w-full h-1 mb-2 ${day.status === 'completed' ? 'bg-green-500/20' :
+                                        day.status === 'active' ? 'bg-white/20' : 'bg-white/5'
                                         }`}>
-                                        <div className={`h-full rounded-full ${day.status === 'completed' ? 'w-full bg-green-500' :
-                                                day.status === 'active' ? 'w-1/2 bg-white animate-pulse' : 'w-0'
+                                        <div className={`h-full ${day.status === 'completed' ? 'w-full bg-green-500' :
+                                            day.status === 'active' ? 'w-1/2 bg-white animate-pulse' : 'w-0'
                                             }`} />
                                     </div>
-                                    <p className={`text-[10px] font-bold uppercase truncate ${day.status === 'active' ? 'text-white' : 'text-gray-600'
+                                    <p className={`text-[10px] font-bold uppercase truncate ${day.status === 'active' ? 'text-white' : 'text-white/40'
                                         }`}>
                                         {day.status === 'locked' ? 'Locked' : day.status === 'active' ? 'In Progress' : 'Verified'}
                                     </p>

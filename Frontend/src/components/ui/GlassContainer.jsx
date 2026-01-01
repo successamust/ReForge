@@ -13,7 +13,7 @@ const GlassContainer = ({ children, className, intensity = 'medium', glow = fals
 
     return (
         <div className={cn(
-            'rounded-2xl border border-white/10 relative overflow-hidden',
+            'border border-white/10 relative overflow-hidden',
             intensities[intensity],
             glow && 'shadow-[0_0_30px_rgba(168,85,247,0.1)]',
             className

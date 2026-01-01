@@ -25,20 +25,20 @@ const Leaderboard = () => {
                     </div>
                     <div className="flex gap-4">
                         <GlassContainer intensity="low" className="px-6 py-4 flex items-center gap-4 border-white/5">
-                            <div className="p-2 bg-yellow-500/10 text-yellow-500 rounded-lg">
+                            <div className="p-2 bg-yellow-500/10 text-yellow-500">
                                 <Award size={20} />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Prize Pool</p>
+                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Prize Pool</p>
                                 <p className="text-white font-black tracking-tight text-xl">$15,000</p>
                             </div>
                         </GlassContainer>
                         <GlassContainer intensity="low" className="px-6 py-4 flex items-center gap-4 border-white/5">
-                            <div className="p-2 bg-white/10 text-white rounded-lg">
+                            <div className="p-2 bg-white/10 text-white">
                                 <Zap size={20} />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily XP</p>
+                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Daily XP</p>
                                 <p className="text-white font-black tracking-tight text-xl">1.5M+</p>
                             </div>
                         </GlassContainer>
@@ -49,7 +49,7 @@ const Leaderboard = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left font-sans">
                             <thead>
-                                <tr className="border-b border-white/5 uppercase text-[10px] font-black tracking-[0.2em] text-gray-500">
+                                <tr className="border-b border-white/5 uppercase text-[10px] font-black tracking-[0.2em] text-white/40">
                                     <th className="px-8 py-6">Rank</th>
                                     <th className="px-8 py-6">Engineer</th>
                                     <th className="px-8 py-6">Sprint XP</th>
@@ -66,15 +66,15 @@ const Leaderboard = () => {
                                     >
                                         <td className="px-8 py-6">
                                             <span className={`text-xl font-black italic italic tracking-tighter ${player.rank === 1 ? 'text-yellow-500' :
-                                                    player.rank === 2 ? 'text-gray-300' :
-                                                        player.rank === 3 ? 'text-orange-500' : 'text-gray-600'
+                                                player.rank === 2 ? 'text-gray-300' :
+                                                    player.rank === 3 ? 'text-orange-500' : 'text-gray-600'
                                                 }`}>
                                                 #{player.rank < 10 ? `0${player.rank}` : player.rank}
                                             </span>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center font-black text-xs text-white group-hover:scale-110 transition-transform">
+                                                <div className="w-10 h-10 bg-white/10 border border-white/10 flex items-center justify-center font-black text-xs text-white group-hover:scale-110 transition-transform">
                                                     {player.avatar}
                                                 </div>
                                                 <span className="text-white font-black tracking-tight group-hover:text-white/80 transition-colors">
@@ -83,13 +83,13 @@ const Leaderboard = () => {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <span className="text-gray-300 font-mono font-bold">
+                                            <span className="text-white/60 font-mono font-bold">
                                                 {player.score.toLocaleString()}
                                             </span>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className={`flex items-center gap-1 font-bold text-[10px] uppercase ${player.trend === 'up' ? 'text-green-500' :
-                                                    player.trend === 'down' ? 'text-red-500' : 'text-gray-500'
+                                                player.trend === 'down' ? 'text-red-500' : 'text-white/40'
                                                 }`}>
                                                 {player.trend === 'up' && <TrendingUp size={12} />}
                                                 {player.trend}

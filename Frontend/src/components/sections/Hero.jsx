@@ -1,11 +1,10 @@
-import React, { useMemo, useContext } from 'react';
+import React, { useContext } from 'react';
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../../context/AppContext';
 
 // Professional geometric background - no gradients
 const NexusCore = () => {
-  const { scrollYProgress } = useScroll();
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const springConfig = { damping: 60, stiffness: 400 };
@@ -28,16 +27,6 @@ const NexusCore = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [mouseX, mouseY]);
 
-  // Geometric grid lines
-  const gridLines = useMemo(() => {
-    return Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      x: (i % 5) * 25,
-      y: Math.floor(i / 5) * 25,
-      rotation: Math.random() * 360,
-    }));
-  }, []);
-
   return (
     <div className="nexus-container relative w-full h-full flex items-center justify-center overflow-hidden">
       {/* Minimal grid - ultra subtle */}
@@ -59,7 +48,7 @@ const NexusCore = () => {
                 x2="100"
                 y2={i * 10}
                 stroke="rgba(255, 255, 255, 0.03)"
-            strokeWidth="0.5"
+                strokeWidth="0.5"
               />
             </g>
           ))}
@@ -67,72 +56,84 @@ const NexusCore = () => {
       </div>
 
       {/* Geometric shapes - minimal, sophisticated */}
-      {[...Array(6)].map((_, i) => {
-        const angle = (i / 6) * Math.PI * 2;
-        const radius = 200 + i * 50;
-        return (
-          <motion.div
-            key={i}
-            className="absolute border border-white/5"
-            style={{
-              left: '50%',
-              top: '50%',
-              width: `${radius * 2}px`,
-              height: `${radius * 2}px`,
-              transform: 'translate(-50%, -50%)',
-              borderRadius: i % 2 === 0 ? '50%' : '0%',
-              rotate: angle * (180 / Math.PI),
-              x: useTransform(x, (v) => v * (i % 2 === 0 ? 0.3 : -0.2)),
-              y: useTransform(y, (v) => v * (i % 2 === 0 ? 0.2 : -0.3)),
-            }}
-            animate={{
-              rotate: [0, 360],
-              opacity: [0.05, 0.1, 0.05],
-            }}
-            transition={{
-              rotate: {
-                duration: 40 + i * 10,
-                repeat: Infinity,
-                ease: "linear"
-              },
-              opacity: {
-                duration: 4 + i,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }
-            }}
-          />
-        );
-      })}
+      {[...Array(6)].map((_, i) => (
+        <GeometricShape key={i} index={i} x={x} y={y} />
+      ))}
 
       {/* Minimal dots - strategic placement */}
-      {[...Array(12)].map((_, i) => {
-        const angle = (i / 12) * Math.PI * 2;
-        const radius = 300;
-        return (
-        <motion.div
-          key={i}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{
-              left: '50%',
-              top: '50%',
-              x: useTransform(x, (v) => Math.cos(angle) * radius + v * 0.5),
-              y: useTransform(y, (v) => Math.sin(angle) * radius + v * 0.5),
-          }}
-          animate={{
-              opacity: [0.2, 0.6, 0.2],
-              scale: [1, 1.5, 1],
-          }}
-          transition={{
-              duration: 3 + i * 0.3,
-            repeat: Infinity,
-              delay: i * 0.2,
-              ease: "easeInOut"
-          }}
-        />
-        );
-      })}
+      {[...Array(12)].map((_, i) => (
+        <GeometricDot key={i} index={i} x={x} y={y} />
+      ))}
     </div>
+  );
+};
+
+const GeometricShape = ({ index, x, y }) => {
+  const angle = (index / 6) * Math.PI * 2;
+  const radius = 200 + index * 50;
+  const xTransform = useTransform(x, (v) => v * (index % 2 === 0 ? 0.3 : -0.2));
+  const yTransform = useTransform(y, (v) => v * (index % 2 === 0 ? 0.2 : -0.3));
+
+  return (
+    <motion.div
+      className="absolute border border-white/5"
+      style={{
+        left: '50%',
+        top: '50%',
+        width: `${radius * 2}px`,
+        height: `${radius * 2}px`,
+        transform: 'translate(-50%, -50%)',
+        borderRadius: index % 2 === 0 ? '50%' : '0%',
+        rotate: angle * (180 / Math.PI),
+        x: xTransform,
+        y: yTransform,
+      }}
+      animate={{
+        rotate: [0, 360],
+        opacity: [0.05, 0.1, 0.05],
+      }}
+      transition={{
+        rotate: {
+          duration: 40 + index * 10,
+          repeat: Infinity,
+          ease: "linear"
+        },
+        opacity: {
+          duration: 4 + index,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }
+      }}
+    />
+  );
+};
+
+const GeometricDot = ({ index, x, y }) => {
+  const angle = (index / 12) * Math.PI * 2;
+  const radius = 300;
+  const xTransform = useTransform(x, (v) => Math.cos(angle) * radius + v * 0.5);
+  const yTransform = useTransform(y, (v) => Math.sin(angle) * radius + v * 0.5);
+
+  return (
+    <motion.div
+      className="absolute w-1 h-1 bg-white rounded-full"
+      style={{
+        left: '50%',
+        top: '50%',
+        x: xTransform,
+        y: yTransform,
+      }}
+      animate={{
+        opacity: [0.2, 0.6, 0.2],
+        scale: [1, 1.5, 1],
+      }}
+      transition={{
+        duration: 3 + index * 0.3,
+        repeat: Infinity,
+        delay: index * 0.2,
+        ease: "easeInOut"
+      }}
+    />
   );
 };
 
@@ -140,7 +141,7 @@ const Hero = () => {
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
   const { startSession, isSessionActive, isAuthenticated } = useContext(AppContext);
-  
+
   // Advanced scroll transforms
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -200]);
   const backgroundOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
@@ -175,14 +176,14 @@ const Hero = () => {
             className="flex flex-col items-start"
           >
             {/* Badge */}
-        <motion.div
+            <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="mb-8"
-        >
+            >
               <div className="inline-flex items-center gap-3 px-4 py-2 border border-white/10 bg-white/[0.02] backdrop-blur-sm">
-                <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                <div className="w-1.5 h-1.5 bg-white rounded-none" />
                 <span className="text-[10px] font-mono text-white/60 tracking-[0.3em] uppercase">
                   30-Day Challenge
                 </span>
@@ -207,7 +208,7 @@ const Hero = () => {
               >
                 Your Muscle
               </motion.h1>
-          </div>
+            </div>
 
             {/* Description */}
             <motion.div
@@ -217,7 +218,7 @@ const Hero = () => {
               className="max-w-2xl mb-12"
             >
               <p className="text-white/70 text-lg md:text-xl leading-relaxed font-light tracking-wide">
-                The AI dependency is eroding your coding fundamentals. Rebuild manual intuition through rigorous practice. No shortcuts. No autocomplete. Pure engineering discipline.
+                Rediscover the joy of the craft. Whether you're breaking free from AI reliance or reigniting a lost passion, rebuild your engineering intuition through pure, rigorous practice. No shortcuts. No prompts. Just you and the code.
               </p>
             </motion.div>
 
@@ -230,7 +231,7 @@ const Hero = () => {
             >
               <motion.button
                 onClick={handleInitiateDetox}
-              disabled={isSessionActive}
+                disabled={isSessionActive}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="group relative px-8 py-4 bg-white text-black font-bold text-sm uppercase tracking-widest overflow-hidden"
@@ -243,7 +244,7 @@ const Hero = () => {
                   transition={{ duration: 0.6, ease: "easeInOut" }}
                 />
               </motion.button>
-              
+
               <Link to="/lessons">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -278,8 +279,8 @@ const Hero = () => {
                   </div>
                   <div className="text-white text-3xl font-black tracking-tight">
                     {stat.value}
-          </div>
-        </motion.div>
+                  </div>
+                </motion.div>
               ))}
             </motion.div>
           </motion.div>
@@ -299,7 +300,7 @@ const Hero = () => {
           className="flex flex-col items-center gap-2"
         >
           <div className="w-px h-12 bg-white/20" />
-          <div className="w-1 h-1 bg-white/40 rounded-full" />
+          <div className="w-1 h-1 bg-white/40 rounded-none" />
         </motion.div>
       </motion.div>
     </section>

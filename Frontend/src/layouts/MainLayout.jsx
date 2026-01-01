@@ -19,21 +19,27 @@ const MainLayout = ({ children }) => {
 
             <Footer />
 
-            {/* Global Notifications */}
-            <div className="fixed bottom-8 right-8 z-[200] flex flex-col gap-4">
+            {/* Global Notifications - Industrial Design */}
+            <div className="fixed bottom-8 right-8 z-[200] flex flex-col gap-2 pointer-events-none">
                 <AnimatePresence>
                     {notifications.map((n) => (
                         <motion.div
                             key={n.id}
-                            initial={{ opacity: 0, x: 50, scale: 0.9 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: 20, scale: 0.9 }}
-                            className={`px-6 py-3 rounded-xl border backdrop-blur-xl shadow-2xl ${n.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
-                                    n.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
-                                        'bg-white/5 border-white/20 text-white'
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            className={`pointer-events-auto min-w-[300px] border-l-4 p-4 shadow-2xl bg-black border-y border-r border-white/10 font-mono text-xs ${n.type === 'error' ? 'border-l-red-500' :
+                                    n.type === 'success' ? 'border-l-green-500' :
+                                        'border-l-white'
                                 }`}
                         >
-                            {n.msg}
+                            <div className="flex justify-between items-center mb-1 opacity-50 text-[10px] uppercase tracking-widest">
+                                <span>[{n.type === 'error' ? 'ERR' : 'SYS'}]</span>
+                                <span>{new Date().toLocaleTimeString([], { hour12: false })}</span>
+                            </div>
+                            <div className="text-white font-bold uppercase tracking-wide">
+                                {n.msg}
+                            </div>
                         </motion.div>
                     ))}
                 </AnimatePresence>

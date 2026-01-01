@@ -26,7 +26,7 @@ const OAuthCallbackPage = () => {
                     } else {
                         throw new Error('Failed to get user data');
                     }
-                } catch (error) {
+                } catch {
                     addNotification({
                         type: 'error',
                         message: 'OAuth login failed. Please try again.'

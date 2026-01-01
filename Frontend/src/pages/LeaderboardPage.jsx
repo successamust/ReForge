@@ -17,11 +17,7 @@ const LeaderboardPage = () => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadLeaderboard();
-    }, [selectedLanguage]);
-
-    const loadLeaderboard = async () => {
+    const loadLeaderboard = React.useCallback(async () => {
         try {
             setLoading(true);
             const response = await leaderboardService.getLeaderboard(selectedLanguage);
@@ -33,7 +29,11 @@ const LeaderboardPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedLanguage]);
+
+    useEffect(() => {
+        loadLeaderboard();
+    }, [loadLeaderboard]);
 
     const ref = useRef(null);
     const { scrollYProgress } = useScroll({
@@ -52,7 +52,7 @@ const LeaderboardPage = () => {
                     className="mb-16"
                 >
                     <div className="inline-flex items-center gap-3 px-4 py-2 border border-white/10 bg-white/[0.02] mb-8">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                        <div className="w-1.5 h-1.5 bg-white rounded-none" />
                         <span className="text-[10px] font-mono text-white/60 tracking-[0.3em] uppercase">
                             Global Ranking
                         </span>
@@ -73,11 +73,10 @@ const LeaderboardPage = () => {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setSelectedLanguage(lang.id)}
-                            className={`px-6 py-3 font-bold uppercase tracking-widest text-sm transition-all border ${
-                                selectedLanguage === lang.id
-                                    ? 'bg-white text-black border-white'
-                                    : 'bg-white/[0.02] text-white/60 border-white/10 hover:border-white/20 hover:text-white'
-                            }`}
+                            className={`px-6 py-3 font-bold uppercase tracking-widest text-sm transition-all border ${selectedLanguage === lang.id
+                                ? 'bg-white text-black border-white'
+                                : 'bg-white/[0.02] text-white/60 border-white/10 hover:border-white/20 hover:text-white'
+                                }`}
                         >
                             {lang.name}
                         </motion.button>
@@ -156,9 +155,8 @@ const LeaderboardPage = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-8 py-6 text-right">
-                                                        <span className={`text-xs font-bold uppercase tracking-widest ${
-                                                            rank === 1 ? 'text-white' : rank <= 10 ? 'text-white/80' : 'text-white/40'
-                                                        }`}>
+                                                        <span className={`text-xs font-bold uppercase tracking-widest ${rank === 1 ? 'text-white' : rank <= 10 ? 'text-white/80' : 'text-white/40'
+                                                            }`}>
                                                             {rank === 1 ? 'Elite' : rank <= 10 ? 'Verified' : 'Active'}
                                                         </span>
                                                     </td>

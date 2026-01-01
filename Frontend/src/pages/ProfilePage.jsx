@@ -6,7 +6,7 @@ import { authService } from '../services/auth.service';
 import { AppContext } from '../context/AppContext';
 
 const ProfilePage = () => {
-    const { user, setUser, logout, addNotification } = useContext(AppContext);
+    const { setUser, logout, addNotification } = useContext(AppContext);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -17,31 +17,31 @@ const ProfilePage = () => {
     });
 
     useEffect(() => {
-        loadProfile();
-    }, []);
+        const loadProfile = async () => {
+            try {
+                setLoading(true);
+                const response = await authService.getProfile();
+                // API interceptor returns response.data, so response is already { success, data }
+                const profileData = response?.data || response;
+                const userData = profileData?.user || profileData;
+                setProfile(userData);
+                setFormData({
+                    firstName: userData?.firstName || '',
+                    lastName: userData?.lastName || '',
+                    timezone: userData?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+                });
+            } catch {
+                addNotification({
+                    type: 'error',
+                    message: 'Failed to load profile'
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const loadProfile = async () => {
-        try {
-            setLoading(true);
-            const response = await authService.getProfile();
-            // API interceptor returns response.data, so response is already { success, data }
-            const profileData = response?.data || response;
-            const userData = profileData?.user || profileData;
-            setProfile(userData);
-            setFormData({
-                firstName: userData?.firstName || '',
-                lastName: userData?.lastName || '',
-                timezone: userData?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
-            });
-        } catch (error) {
-            addNotification({
-                type: 'error',
-                message: 'Failed to load profile'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+        loadProfile();
+    }, [addNotification]);
 
     const handleSave = async () => {
         try {
@@ -77,66 +77,70 @@ const ProfilePage = () => {
         offset: ["start end", "end start"]
     });
 
-    if (loading && !profile) {
-        return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
-    }
+    const headerY = useTransform(scrollYProgress, [0, 1], [50, -50]);
+    const headerOpacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+    const cardY = useTransform(scrollYProgress, [0, 1], [40, -40]);
+    const cardOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+    const settingsY = useTransform(scrollYProgress, [0, 1], [60, -60]);
+    const settingsOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
 
     return (
         <div ref={ref} className="relative min-h-screen bg-black py-40 px-6">
-            <div className="container mx-auto max-w-6xl">
-                <motion.div
-                    style={{
-                        y: useTransform(scrollYProgress, [0, 1], [50, -50]),
-                        opacity: useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0])
-                    }}
-                    className="mb-16"
-                >
-                    <div className="inline-flex items-center gap-3 px-4 py-2 border border-white/10 bg-white/[0.02] mb-8">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                        <span className="text-[10px] font-mono text-white/60 tracking-[0.3em] uppercase">
-                            Profile
-                        </span>
-                    </div>
-                    <h1 className="text-[clamp(3rem,8vw,6rem)] font-black leading-[0.9] tracking-[-0.02em] text-white mb-6">
-                        Account Settings
-                    </h1>
-                </motion.div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5">
-                    {/* Profile Info */}
+            {loading && !profile ? (
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+            ) : (
+                <div className="container mx-auto max-w-6xl">
                     <motion.div
                         style={{
-                            y: useTransform(scrollYProgress, [0, 1], [40, -40]),
-                            opacity: useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0])
+                            y: headerY,
+                            opacity: headerOpacity
                         }}
-                        className="bg-black p-8 border border-white/10 text-center"
+                        className="mb-16"
                     >
-                        <div className="w-20 h-20 border border-white/10 flex items-center justify-center mx-auto mb-6">
-                            <CodeTerminal size={32} className="text-white" />
+                        <div className="inline-flex items-center gap-3 px-4 py-2 border border-white/10 bg-white/[0.02] mb-8">
+                            <div className="w-1.5 h-1.5 bg-white rounded-none" />
+                            <span className="text-[10px] font-mono text-white/60 tracking-[0.3em] uppercase">
+                                Profile
+                            </span>
                         </div>
-                        <h2 className="text-2xl font-black text-white mb-2 tracking-tight">
-                            {profile?.firstName && profile?.lastName 
-                                ? `${profile.firstName} ${profile.lastName}`
-                                : profile?.email?.split('@')[0] || 'User'}
-                        </h2>
-                        <p className="text-white/60 font-light mb-4">{profile?.email}</p>
-                        <span className="inline-block px-3 py-1 border border-white/10 text-xs font-bold uppercase tracking-widest text-white/60">
-                            {profile?.role?.toUpperCase() || 'USER'}
-                        </span>
+                        <h1 className="text-[clamp(3rem,8vw,6rem)] font-black leading-[0.9] tracking-[-0.02em] text-white mb-6">
+                            Account Settings
+                        </h1>
                     </motion.div>
 
-                    {/* Settings */}
-                    <motion.div
-                        style={{
-                            y: useTransform(scrollYProgress, [0, 1], [60, -60]),
-                            opacity: useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0])
-                        }}
-                        className="md:col-span-2 bg-black p-8 border border-white/10"
-                    >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5">
+                        {/* Profile Info */}
+                        <motion.div
+                            style={{
+                                y: cardY,
+                                opacity: cardOpacity
+                            }}
+                            className="bg-black p-8 border border-white/10 text-center"
+                        >
+                            <div className="w-20 h-20 border border-white/10 flex items-center justify-center mx-auto mb-6">
+                                <CodeTerminal size={32} className="text-white" />
+                            </div>
+                            <h2 className="text-2xl font-black text-white mb-2 tracking-tight">
+                                {profile?.firstName && profile?.lastName
+                                    ? `${profile.firstName} ${profile.lastName}`
+                                    : profile?.email?.split('@')[0] || 'User'}
+                            </h2>
+                            <p className="text-white/60 font-light mb-4">{profile?.email}</p>
+                            <span className="inline-block px-3 py-1 border border-white/10 text-xs font-bold uppercase tracking-widest text-white/60">
+                                {profile?.role?.toUpperCase() || 'USER'}
+                            </span>
+                        </motion.div>
+
+                        {/* Settings */}
+                        <motion.div
+                            style={{
+                                y: settingsY,
+                                opacity: settingsOpacity
+                            }}
+                            className="md:col-span-2 bg-black p-8 border border-white/10"
+                        >
                             <div className="flex items-center justify-between mb-8">
                                 <h2 className="text-2xl font-black text-white tracking-tight">
                                     Settings
@@ -276,8 +280,9 @@ const ProfilePage = () => {
                                 </Button>
                             </div>
                         </motion.div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

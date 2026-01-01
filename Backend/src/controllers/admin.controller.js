@@ -241,6 +241,45 @@ export async function getUser(req, res, next) {
 }
 
 /**
+ * Update user (role, status)
+ */
+export async function updateUser(req, res, next) {
+    try {
+        const { id } = req.params;
+        const { role, isActive } = req.body;
+        const adminId = req.userId;
+
+        const user = await User.findById(id);
+        if (!user) {
+            throw new NotFoundError('User');
+        }
+
+        // Update allowed fields
+        if (role !== undefined) user.role = role;
+        if (isActive !== undefined) user.isActive = isActive;
+
+        await user.save();
+
+        await AuditLog.log({
+            userId: adminId,
+            action: 'ADMIN_USER_UPDATE',
+            payload: {
+                targetUserId: id,
+                updates: { role, isActive },
+            },
+            createdBy: adminId,
+        });
+
+        res.json({
+            success: true,
+            data: { user: user.toSafeObject() },
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
  * Get audit logs
  */
 export async function getAuditLogs(req, res, next) {
