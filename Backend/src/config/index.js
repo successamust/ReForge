@@ -10,9 +10,9 @@ const envSchema = Joi.object({
     NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
     PORT: Joi.number().port().default(3000),
     MONGODB_URI: Joi.string().required(),
-    JWT_SECRET: process.env.NODE_ENV === 'test'
-        ? Joi.string().required()
-        : Joi.string().min(32).required(),
+    JWT_SECRET: process.env.NODE_ENV === 'production'
+        ? Joi.string().min(32).required()
+        : Joi.string().min(8).required(),
     REDIS_HOST: Joi.string().default('localhost'),
 }).unknown(true);
 
@@ -72,12 +72,12 @@ const config = {
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackUrl: process.env.GOOGLE_CALLBACK_URL || `${process.env.API_URL || 'http://localhost:3000'}/api/v1/auth/google/callback`,
+            callbackUrl: process.env.GOOGLE_CALLBACK_URL || `${process.env.API_URL || 'http://localhost:3000'}/v1/auth/google/callback`,
         },
         github: {
             clientId: process.env.GITHUB_CLIENT_ID,
             clientSecret: process.env.GITHUB_CLIENT_SECRET,
-            callbackUrl: process.env.GITHUB_CALLBACK_URL || `${process.env.API_URL || 'http://localhost:3000'}/api/v1/auth/github/callback`,
+            callbackUrl: process.env.GITHUB_CALLBACK_URL || `${process.env.API_URL || 'http://localhost:3000'}/v1/auth/github/callback`,
         },
     },
 

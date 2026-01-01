@@ -11,7 +11,7 @@ router.use(requireAdmin);
 
 /**
  * @swagger
- * /api/v1/admin/dashboard:
+ * /v1/admin/dashboard:
  *   get:
  *     summary: Get system dashboard stats
  *     tags: [Admin]
@@ -22,7 +22,7 @@ router.get('/dashboard', adminController.getSystemStats);
 
 /**
  * @swagger
- * /api/v1/admin/lessons:
+ * /v1/admin/lessons:
  *   post:
  *     summary: Create a new lesson
  *     tags: [Admin]
@@ -42,7 +42,7 @@ router.post('/lessons', validateBody(schemas.lesson), adminController.createLess
 
 /**
  * @swagger
- * /api/v1/admin/lessons/{language}/{day}:
+ * /v1/admin/lessons/{language}/{day}:
  *   get:
  *     summary: Get lesson with solution (admin only)
  *     tags: [Admin]
@@ -57,7 +57,7 @@ router.get(
 
 /**
  * @swagger
- * /api/v1/admin/lessons/{language}/{day}:
+ * /v1/admin/lessons/{language}/{day}:
  *   put:
  *     summary: Update a lesson
  *     tags: [Admin]
@@ -72,7 +72,7 @@ router.put(
 
 /**
  * @swagger
- * /api/v1/admin/lessons/{language}/{day}:
+ * /v1/admin/lessons/{language}/{day}:
  *   delete:
  *     summary: Delete a lesson
  *     tags: [Admin]
@@ -87,7 +87,7 @@ router.delete(
 
 /**
  * @swagger
- * /api/v1/admin/progress/override:
+ * /v1/admin/progress/override:
  *   post:
  *     summary: Override user progress
  *     tags: [Admin]
@@ -125,7 +125,7 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/admin/submissions/{id}/rerun:
+ * /v1/admin/submissions/{id}/rerun:
  *   post:
  *     summary: Re-run a submission
  *     tags: [Admin]
@@ -140,7 +140,7 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/admin/users:
+ * /v1/admin/users:
  *   get:
  *     summary: Get all users (paginated)
  *     tags: [Admin]
@@ -151,7 +151,7 @@ router.get('/users', adminController.getUsers);
 
 /**
  * @swagger
- * /api/v1/admin/users/{id}:
+ * /v1/admin/users/{id}:
  *   get:
  *     summary: Get user by ID
  *     tags: [Admin]
@@ -162,7 +162,7 @@ router.get('/users/:id', adminController.getUser);
 
 /**
  * @swagger
- * /api/v1/admin/users/{id}/achievements:
+ * /v1/admin/users/{id}/achievements:
  *   get:
  *     summary: Get user achievements (admin only)
  *     tags: [Admin]
@@ -173,7 +173,7 @@ router.get('/users/:id/achievements', adminController.getUserAchievements);
 
 /**
  * @swagger
- * /api/v1/admin/users/{id}/tier:
+ * /v1/admin/users/{id}/tier:
  *   put:
  *     summary: Update user subscription tier
  *     tags: [Admin]
@@ -188,7 +188,7 @@ router.put(
 
 /**
  * @swagger
- * /api/v1/admin/audit-logs:
+ * /v1/admin/audit-logs:
  *   get:
  *     summary: Get audit logs
  *     tags: [Admin]
@@ -199,7 +199,7 @@ router.get('/audit-logs', adminController.getAuditLogs);
 
 /**
  * @swagger
- * /api/v1/admin/reports/users:
+ * /v1/admin/reports/users:
  *   get:
  *     summary: Export user report
  *     tags: [Admin]

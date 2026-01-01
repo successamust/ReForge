@@ -3,10 +3,10 @@ import app from '../../src/app.js';
 import { User, Lesson } from '../../src/models/index.js';
 
 describe('Auth API', () => {
-    describe('POST /api/v1/auth/register', () => {
+    describe('POST /v1/auth/register', () => {
         it('should register a new user', async () => {
             const res = await request(app)
-                .post('/api/v1/auth/register')
+                .post('/v1/auth/register')
                 .send({
                     email: 'newuser@example.com',
                     password: 'password123',
@@ -30,7 +30,7 @@ describe('Auth API', () => {
             });
 
             const res = await request(app)
-                .post('/api/v1/auth/register')
+                .post('/v1/auth/register')
                 .send({
                     email: 'existing@example.com',
                     password: 'password123',
@@ -43,7 +43,7 @@ describe('Auth API', () => {
 
         it('should reject invalid email', async () => {
             const res = await request(app)
-                .post('/api/v1/auth/register')
+                .post('/v1/auth/register')
                 .send({
                     email: 'invalid-email',
                     password: 'password123',
@@ -55,7 +55,7 @@ describe('Auth API', () => {
         });
     });
 
-    describe('POST /api/v1/auth/login', () => {
+    describe('POST /v1/auth/login', () => {
         beforeEach(async () => {
             await User.create({
                 email: 'test@example.com',
@@ -67,7 +67,7 @@ describe('Auth API', () => {
 
         it('should login with valid credentials', async () => {
             const res = await request(app)
-                .post('/api/v1/auth/login')
+                .post('/v1/auth/login')
                 .send({
                     email: 'test@example.com',
                     password: 'password123',
@@ -80,7 +80,7 @@ describe('Auth API', () => {
 
         it('should reject invalid password', async () => {
             const res = await request(app)
-                .post('/api/v1/auth/login')
+                .post('/v1/auth/login')
                 .send({
                     email: 'test@example.com',
                     password: 'wrongpassword',
@@ -90,12 +90,12 @@ describe('Auth API', () => {
         });
     });
 
-    describe('GET /api/v1/auth/profile', () => {
+    describe('GET /v1/auth/profile', () => {
         let token;
 
         beforeEach(async () => {
             const registerRes = await request(app)
-                .post('/api/v1/auth/register')
+                .post('/v1/auth/register')
                 .send({
                     email: 'profile@example.com',
                     password: 'password123',
@@ -109,7 +109,7 @@ describe('Auth API', () => {
 
         it('should return user profile with valid token', async () => {
             const res = await request(app)
-                .get('/api/v1/auth/profile')
+                .get('/v1/auth/profile')
                 .set('Authorization', `Bearer ${token}`);
 
             expect(res.status).toBe(200);
@@ -117,7 +117,7 @@ describe('Auth API', () => {
         });
 
         it('should reject without token', async () => {
-            const res = await request(app).get('/api/v1/auth/profile');
+            const res = await request(app).get('/v1/auth/profile');
 
             expect(res.status).toBe(401);
         });
@@ -148,9 +148,9 @@ describe('Lessons API', () => {
         });
     });
 
-    describe('GET /api/v1/lessons/:language', () => {
+    describe('GET /v1/lessons/:language', () => {
         it('should return lesson list for language', async () => {
-            const res = await request(app).get('/api/v1/lessons/javascript');
+            const res = await request(app).get('/v1/lessons/javascript');
 
             expect(res.status).toBe(200);
             expect(res.body.data.lessons).toHaveLength(1);
@@ -158,9 +158,9 @@ describe('Lessons API', () => {
         });
     });
 
-    describe('GET /api/v1/lessons/:language/:day', () => {
+    describe('GET /v1/lessons/:language/:day', () => {
         it('should return lesson without solution and hidden tests', async () => {
-            const res = await request(app).get('/api/v1/lessons/javascript/1');
+            const res = await request(app).get('/v1/lessons/javascript/1');
 
             expect(res.status).toBe(200);
             expect(res.body.data.lesson.solution).toBeUndefined();
@@ -168,7 +168,7 @@ describe('Lessons API', () => {
         });
 
         it('should return 404 for non-existent lesson', async () => {
-            const res = await request(app).get('/api/v1/lessons/javascript/2');
+            const res = await request(app).get('/v1/lessons/javascript/2');
 
             expect(res.status).toBe(404);
         });
@@ -177,7 +177,7 @@ describe('Lessons API', () => {
 
 describe('Health Check', () => {
     it('should return healthy status', async () => {
-        const res = await request(app).get('/api/v1/health');
+        const res = await request(app).get('/v1/health');
 
         expect(res.status).toBe(200);
         expect(res.body.data.status).toBe('healthy');

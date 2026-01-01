@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/leaderboard:
+ * /v1/leaderboard:
  *   get:
  *     summary: Get global leaderboard
  *     tags: [Leaderboard]

@@ -329,13 +329,37 @@ title = soup.find('div', class_='title').text  # 'Hello'</code></pre>`,
         {
             language: 'python', day: 26, title: 'Building REST APIs', difficulty: 7, estimatedMinutes: 50,
             objectives: ['Create Flask/FastAPI routes', 'Handle requests', 'Return JSON', 'Apply validation'],
-            contentHtml: `<h2>FastAPI</h2>
+            contentHtml: `<h2>Building REST APIs with FastAPI</h2>
+<p>FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.7+ based on standard Python type hints.</p>
+
+<h3>Key Features</h3>
+<ul>
+  <li><strong>Fast:</strong> Very high performance, on par with NodeJS and Go.</li>
+  <li><strong>Fast to code:</strong> Increase the speed to develop features by about 200% to 300%.</li>
+  <li><strong>Fewer bugs:</strong> Reduce about 40% of human (developer) induced errors.</li>
+  <li><strong>Intuitive:</strong> Great editor support. Completion everywhere. Less time debugging.</li>
+  <li><strong>Easy:</strong> Designed to be easy to use and learn. Less time reading docs.</li>
+  <li><strong>Short:</strong> Minimize code duplication. Multiple features from each parameter declaration.</li>
+</ul>
+
+<h3>Creating a Basic API</h3>
 <pre><code>from fastapi import FastAPI
+from pydantic import BaseModel
+
 app = FastAPI()
+
+class User(BaseModel):
+    id: int
+    name: string
 
 @app.get("/users/{user_id}")
 def get_user(user_id: int):
-    return {"user_id": user_id}</code></pre>`,
+    return {"user_id": user_id}
+
+@app.post("/users")
+def create_user(user: User):
+    return {"message": "User created", "user": user}</code></pre>
+<p>FastAPI automatically generates interactive API documentation (using Swagger UI) at <code>/docs</code>.</p>`,
             examples: [
                 { title: 'POST', code: `@app.post("/users")\ndef create_user(user: UserCreate):\n    return {"id": 1, **user.dict()}`, explanation: 'Create with Pydantic model.' },
                 { title: 'Query Params', code: `@app.get("/items")\ndef list_items(skip: int = 0, limit: int = 10):\n    return items[skip : skip + limit]`, explanation: 'Handle query parameters.' }
@@ -353,14 +377,35 @@ def get_user(user_id: int):
         {
             language: 'python', day: 27, title: 'Logging and Debugging', difficulty: 6, estimatedMinutes: 40,
             objectives: ['Configure logging', 'Use log levels', 'Add handlers', 'Debug with pdb'],
-            contentHtml: `<h2>Logging</h2>
+            contentHtml: `<h2>Logging and Debugging</h2>
+<p>Effective logging and debugging are crucial for maintaining healthy applications. Python's built-in <code>logging</code> module provides a flexible framework for emitting log messages from Python programs.</p>
+
+<h3>Logging Levels</h3>
+<ul>
+  <li><strong>DEBUG:</strong> Detailed information, typically of interest only when diagnosing problems.</li>
+  <li><strong>INFO:</strong> Confirmation that things are working as expected.</li>
+  <li><strong>WARNING:</strong> An indication that something unexpected happened, or indicative of some problem in the near future (e.g. 'disk space low'). but the software is still working as expected.</li>
+  <li><strong>ERROR:</strong> Due to a more serious problem, the software has not been able to perform some function.</li>
+  <li><strong>CRITICAL:</strong> A serious error, indicating that the program itself may be unable to continue running.</li>
+</ul>
+
+<h3>Basic Configuration</h3>
 <pre><code>import logging
 
-logging.basicConfig(level=logging.INFO)
+# Configure the logging system
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    filename='app.log'
+)
+
 logger = logging.getLogger(__name__)
 
-logger.info("Info message")
-logger.error("Error message")</code></pre>`,
+logger.info("Application started")
+try:
+    result = 10 / 0
+except ZeroDivisionError:
+    logger.exception("Division by zero occurred")</code></pre>`,
             examples: [
                 { title: 'Custom handler', code: `handler = logging.FileHandler('app.log')\nhandler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))\nlogger.addHandler(handler)`, explanation: 'Log to file.' },
                 { title: 'Exception Logging', code: `try:\n    1/0\nexcept:\n    logger.exception("Failed")`, explanation: 'Log with stack trace.' }
@@ -378,11 +423,31 @@ logger.error("Error message")</code></pre>`,
         {
             language: 'python', day: 28, title: 'Concurrency', difficulty: 8, estimatedMinutes: 50,
             objectives: ['Use threading and multiprocessing', 'Understand GIL', 'Apply ThreadPoolExecutor', 'Handle synchronization'],
-            contentHtml: `<h2>Concurrency</h2>
-<pre><code>from concurrent.futures import ThreadPoolExecutor
+            contentHtml: `<h2>Concurrency in Python</h2>
+<p>Concurrency is the ability of different parts or units of a program, algorithm, or problem to be executed out-of-order or in partial order, without affecting the final outcome. Python offers two main approaches: Threading and Multiprocessing.</p>
 
+<h3>Threading vs Multiprocessing</h3>
+<ul>
+  <li><strong>Threading:</strong> Uses shared memory. Good for I/O-bound tasks (network operations, file I/O). Limited by the Global Interpreter Lock (GIL) for CPU-bound tasks.</li>
+  <li><strong>Multiprocessing:</strong> Uses separate memory space (processes). Bypasses the GIL. Ideal for CPU-bound tasks (heavy computations).</li>
+</ul>
+
+<h3>Using concurrent.futures</h3>
+<p>The <code>concurrent.futures</code> module provides a high-level interface for asynchronously executing callables.</p>
+<pre><code>from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+import time
+
+def task(n):
+    time.sleep(1)
+    return n * n
+
+# Thread Pool for I/O tasks
 with ThreadPoolExecutor(max_workers=4) as executor:
-    results = list(executor.map(process, items))</code></pre>`,
+    results = list(executor.map(task, range(5)))
+
+# Process Pool for CPU tasks
+with ProcessPoolExecutor(max_workers=4) as executor:
+    results = list(executor.map(task, range(5)))</code></pre>`,
             examples: [
                 { title: 'Parallel processing', code: `def parallel_sum(lists):\n    with ThreadPoolExecutor() as ex:\n        sums = list(ex.map(sum, lists))\n    return sums`, explanation: 'Sum multiple lists in parallel.' },
                 { title: 'Locking', code: `lock = threading.Lock()\nwith lock:\n    x += 1`, explanation: 'Prevent race conditions.' }
@@ -400,7 +465,23 @@ with ThreadPoolExecutor(max_workers=4) as executor:
         {
             language: 'python', day: 29, title: 'Performance Optimization', difficulty: 8, estimatedMinutes: 50,
             objectives: ['Profile with cProfile', 'Optimize algorithms', 'Use caching', 'Reduce memory'],
-            contentHtml: `<h2>Performance</h2>
+            contentHtml: `<h2>Performance Optimization</h2>
+<p>Optimizing Python code involves understanding where bottlenecks occur and applying strategies to reduce execution time and memory usage.</p>
+
+<h3>Profiling</h3>
+<p>Before optimizing, always measure. The <code>cProfile</code> module is a built-in tool for profiling Python programs.</p>
+<pre><code>python -m cProfile myscript.py</code></pre>
+
+<h3>Optimization Techniques</h3>
+<ul>
+  <li><strong>Algorithmic Improvements:</strong> Choosing the right data structure (e.g., set vs list for lookups) is often the biggest win.</li>
+  <li><strong>Caching (Memoization):</strong> Store results of expensive function calls.</li>
+  <li><strong>List Comprehensions:</strong> Generally faster than for-loops for creating lists.</li>
+  <li><strong>Generator Expressions:</strong> Save memory by processing items one by one.</li>
+  <li><strong>Built-in Functions:</strong> Use functions implemented in C (like <code>map</code>, <code>filter</code>, <code>sum</code>) where possible.</li>
+</ul>
+
+<h3>Using lru_cache</h3>
 <pre><code>from functools import lru_cache
 
 @lru_cache(maxsize=128)
@@ -426,7 +507,26 @@ def fib(n):
             language: 'python', day: 30, title: 'Capstone Project', difficulty: 10, estimatedMinutes: 90,
             objectives: ['Build complete CLI tool', 'Apply all concepts', 'Write tests', 'Document code'],
             contentHtml: `<h2>Capstone: Task Manager CLI</h2>
-<p>Build a complete task management system with CRUD operations.</p>`,
+<p>For your final project, you will build a robust Command Line Interface (CLI) Task Manager application. This project aggregates many concepts you've learned over the past 30 days, including file I/O, data structures, error handling, argument parsing, and testing.</p>
+
+<h3>Project Requirements</h3>
+<ol>
+  <li><strong>Task Management:</strong>
+    <ul>
+      <li>Create new tasks with a title, description, and status (todo, in-progress, done).</li>
+      <li>List all tasks or filter by status.</li>
+      <li>Update task details or toggle status.</li>
+      <li>Delete tasks.</li>
+    </ul>
+  </li>
+  <li><strong>Persistence:</strong> Save tasks to a JSON file so data persists between runs.</li>
+  <li><strong>CLI Interface:</strong> Use <code>argparse</code> to handle command-line arguments (e.g., <code>python tasks.py add "Buy milk"</code>).</li>
+  <li><strong>Error Handling:</strong> Gracefully handle missing files, invalid IDs, or malformed inputs.</li>
+  <li><strong>Testing:</strong> Include a test suite using <code>pytest</code> to verify your logic.</li>
+</ol>
+
+<h3>Suggested Architecture</h3>
+<p>Separate your concerns: have a <code>Storage</code> class for file operations, a <code>TaskManager</code> class for business logic, and a <code>main.py</code> for parsing arguments and invoking the manager.</p>`,
             examples: [
                 { title: 'Task CRUD', code: `class TaskManager:\n    def __init__(self):\n        self.tasks = {}\n        self.next_id = 1\n    \n    def create(self, title):\n        task = {'id': self.next_id, 'title': title}\n        self.tasks[self.next_id] = task\n        self.next_id += 1\n        return task`, explanation: 'In-memory task storage.' },
                 { title: 'CLI Args', code: `import sys\ncmd = sys.argv[1]\nif cmd == 'list':\n    list_tasks()`, explanation: 'Handle command line structure.' }

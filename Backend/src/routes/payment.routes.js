@@ -6,7 +6,7 @@ import express from 'express';
 
 const router = Router();
 
-// Webhook needs raw body (usually handled in app.js for /api/v1/payments/webhook)
+// Webhook needs raw body (usually handled in app.js for /v1/payments/webhook)
 // But for now we define it here.
 router.post('/webhook', express.raw({ type: 'application/json' }), paymentController.handleWebhook);
 

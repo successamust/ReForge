@@ -9,7 +9,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/auth/register:
+ * /v1/auth/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Auth]
@@ -37,7 +37,7 @@ router.post('/register', authLimiter, validateBody(schemas.register), authContro
 
 /**
  * @swagger
- * /api/v1/auth/login:
+ * /v1/auth/login:
  *   post:
  *     summary: Login user
  *     tags: [Auth]
@@ -79,7 +79,7 @@ router.get(
 
 /**
  * @swagger
- * /api/v1/auth/verify-email:
+ * /v1/auth/verify-email:
  *   post:
  *     summary: Verify email address
  *     tags: [Auth]
@@ -99,7 +99,7 @@ router.post('/verify-email', authLimiter, authController.verifyEmail);
 
 /**
  * @swagger
- * /api/v1/auth/forgot-password:
+ * /v1/auth/forgot-password:
  *   post:
  *     summary: Request password reset email
  *     tags: [Auth]
@@ -119,7 +119,7 @@ router.post('/forgot-password', authLimiter, authController.forgotPassword);
 
 /**
  * @swagger
- * /api/v1/auth/reset-password:
+ * /v1/auth/reset-password:
  *   post:
  *     summary: Reset password with token
  *     tags: [Auth]
@@ -136,11 +136,11 @@ router.post('/forgot-password', authLimiter, authController.forgotPassword);
  *     responses:
  *       200: { description: Password reset successful }
  */
-router.post('/reset-password', authController.resetPassword);
+router.post('/reset-password', authLimiter, validateBody(schemas.resetPassword), authController.resetPassword);
 
 /**
  * @swagger
- * /api/v1/auth/profile:
+ * /v1/auth/profile:
  *   get:
  *     summary: Get current user profile
  *     tags: [Auth]
@@ -154,7 +154,7 @@ router.get('/profile', authenticate, authController.getProfile);
 
 /**
  * @swagger
- * /api/v1/auth/profile:
+ * /v1/auth/profile:
  *   put:
  *     summary: Update user profile
  *     tags: [Auth]

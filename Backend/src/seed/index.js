@@ -30,6 +30,8 @@ async function seed() {
             const admin = new User({
                 email: config.admin.email,
                 passwordHash: config.admin.password,
+                firstName: 'Admin',
+                lastName: 'Admin',
                 role: 'admin',
                 timezone: 'UTC',
             });
@@ -43,6 +45,8 @@ async function seed() {
             const testUser = new User({
                 email: 'test@example.com',
                 passwordHash: 'password123',
+                firstName: 'Test',
+                lastName: 'User',
                 role: 'user',
                 timezone: 'America/New_York',
             });

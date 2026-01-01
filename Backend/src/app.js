@@ -28,31 +28,27 @@ if (process.env.SENTRY_DSN) {
             nodeProfilingIntegration(),
         ],
         // Performance Monitoring
-        tracesSampleRate: 1.0, //  Capture 100% of the transactions
-        // Set sampling rate for profiling - this is relative to tracesSampleRate
+        tracesSampleRate: 1.0,
         profilesSampleRate: 1.0,
     });
-    // The request handler must be the first middleware on the app
-    app.use(Sentry.Handlers.requestHandler());
-    // TracingHandler creates a trace for every incoming request
-    app.use(Sentry.Handlers.tracingHandler());
 }
 
 // Security middleware
 app.use(helmet());
 app.use(cors({
     origin: config.env === 'production'
-        ? [process.env.FRONTEND_URL, 'https://reforge.app'] // Example production domains
-        : true, // Allow all in dev
+        ? [process.env.FRONTEND_URL, 'https://reforge.app']
+        : true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'stripe-signature'],
 }));
 
-// Rate limiting
+// Rate limiting (disabled in development and test)
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per windowMs
+    skip: () => config.env === 'development' || config.env === 'test', // Skip rate limiting in development/test
     message: {
         success: false,
         error: {
@@ -61,8 +57,7 @@ const limiter = rateLimit({
         },
     },
 });
-app.use('/api', limiter);
-app.use('/api/v1', limiter);
+app.use('/v1', limiter);
 
 // Request parsing
 app.use(express.json({ limit: '1mb' }));
@@ -86,7 +81,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: `${config.apiUrl}/api/v1`,
+                url: `${config.apiUrl}/v1`,
                 description: config.env === 'production' ? 'Production' : 'Development',
             },
         ],
@@ -125,13 +120,11 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // API routes
-app.use('/api/v1', routes);
-// Temporary redirect or alias for base /api to /api/v1 if desired, but let's go clean v1
-app.use('/api', routes); // Keeping both for compatibility during transition
+app.use('/v1', routes);
 
-// Sentry error handler (must be before custom error handlers)
+// Sentry error handler (v10 style)
 if (process.env.SENTRY_DSN) {
-    app.use(Sentry.Handlers.errorHandler());
+    Sentry.setupExpressErrorHandler(app);
 }
 
 // Error handlers

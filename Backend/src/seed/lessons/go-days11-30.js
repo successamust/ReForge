@@ -8,21 +8,87 @@ export const goDays11to30Real = [
         language: 'go', day: 11, title: 'Select Statement', difficulty: 6, estimatedMinutes: 40,
         objectives: ['Use select for channel multiplexing', 'Implement timeouts', 'Handle non-blocking operations', 'Use default case'],
         contentHtml: `<h2>Select Statement</h2>
+<p>The <code>select</code> statement lets a goroutine wait on multiple channel operations. It's similar to a switch statement but for channels.</p>
+
+<h3>Basic Select</h3>
 <pre><code>select {
 case msg := <-ch1:
-    fmt.Println("From ch1:", msg)
+    fmt.Println("Received from ch1:", msg)
 case msg := <-ch2:
-    fmt.Println("From ch2:", msg)
-case <-time.After(time.Second):
-    fmt.Println("Timeout!")
+    fmt.Println("Received from ch2:", msg)
+}
+
+// Select blocks until one case is ready
+// If multiple cases are ready, one is chosen randomly</code></pre>
+
+<h3>Select with Timeout</h3>
+<pre><code>select {
+case result := <-ch:
+    fmt.Println("Got result:", result)
+case <-time.After(5 * time.Second):
+    fmt.Println("Timeout after 5 seconds")
+}
+
+// time.After returns a channel that sends after duration
+// Useful for implementing timeouts</code></pre>
+
+<h3>Non-blocking with Default</h3>
+<pre><code>select {
+case msg := <-ch:
+    fmt.Println("Got message:", msg)
 default:
-    fmt.Println("No message ready")
-}</code></pre>`,
+    fmt.Println("No message available, continuing...")
+}
+
+// Default case makes select non-blocking
+// Executes immediately if no channel is ready</code></pre>
+
+<h3>Select for Multiple Channels</h3>
+<pre><code>ch1 := make(chan string)
+ch2 := make(chan string)
+
+// Send to whichever channel is ready to receive
+select {
+case ch1 <- "message":
+    fmt.Println("Sent to ch1")
+case ch2 <- "message":
+    fmt.Println("Sent to ch2")
+case <-time.After(time.Second):
+    fmt.Println("Both channels blocked")
+}</code></pre>
+
+<h3>Select in Loop</h3>
+<pre><code>for {
+    select {
+    case msg := <-ch:
+        fmt.Println("Processing:", msg)
+    case <-done:
+        fmt.Println("Done signal received")
+        return
+    case <-time.After(time.Minute):
+        fmt.Println("No activity for 1 minute")
+    }
+}</code></pre>
+
+<h3>Select with Context</h3>
+<pre><code>ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+select {
+case result := <-ch:
+    return result, nil
+case <-ctx.Done():
+    return nil, ctx.Err()
+}
+
+// Context provides cancellation and timeout
+// More idiomatic than time.After in many cases</code></pre>`,
         examples: [
-            { title: 'Timeout Pattern', code: `func fetchWithTimeout(ch chan string, timeout time.Duration) (string, error) {\n    select {\n    case result := <-ch:\n        return result, nil\n    case <-time.After(timeout):\n        return "", errors.New("timeout")\n    }\n}`, explanation: 'Return early on timeout.' },
-            { title: 'Default Case', code: `select {\ncase msg := <-ch:\n    fmt.Println(msg)\ndefault:\n    fmt.Println("No message")\n}`, explanation: 'Non-blocking read.' }
+            { title: 'Timeout Pattern', code: `func fetchWithTimeout(ch chan string, timeout time.Duration) (string, error) {\n    select {\n    case result := <-ch:\n        return result, nil\n    case <-time.After(timeout):\n        return "", fmt.Errorf("operation timed out after %v", timeout)\n    }\n}`, explanation: 'Use select with time.After for timeouts.' },
+            { title: 'Non-blocking Read', code: `func tryRead(ch chan int) (int, bool) {\n    select {\n    case val := <-ch:\n        return val, true\n    default:\n        return 0, false\n    }\n}`, explanation: 'Default case makes select non-blocking.' },
+            { title: 'Fan-in Pattern', code: `func fanIn(ch1, ch2 <-chan string) <-chan string {\n    out := make(chan string)\n    go func() {\n        for {\n            select {\n            case msg := <-ch1:\n                out <- msg\n            case msg := <-ch2:\n                out <- msg\n            }\n        }\n    }()\n    return out\n}`, explanation: 'Combine multiple channels into one.' }
         ],
-        exercise: { description: 'Simulate selecting from multiple channels and return first value.', starterCode: `func solution(values []int) int {\n    // Return first value (simulate channel race)\n}`, hints: ['Return first element', 'Handle empty slice'] },
+        exercise: { description: 'Simulate selecting from multiple channels. Given a slice of values, return the first value (simulating which channel would be ready first).', starterCode: `func solution(values []int) int {\n    // Return first value (simulate channel race)\n    // If empty, return 0\n}`, hints: ['Return first element', 'Handle empty slice', 'Check length'] },
         tests: [
             { id: 't1', description: 'First value', input: [5, 3, 7], expectedOutput: 5, isHidden: false },
             { id: 't2', description: 'Single', input: [42], expectedOutput: 42, isHidden: false },

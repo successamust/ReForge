@@ -1,5 +1,8 @@
 FROM eclipse-temurin:17-jdk-alpine
 
+# Install dependencies (bash, jq)
+RUN apk add --no-cache bash jq
+
 WORKDIR /runner
 
 # Install JUnit for testing

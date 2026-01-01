@@ -52,7 +52,7 @@ npm run dev
 
 ## API Documentation (v1)
 
-Base URL: `http://localhost:3000/api/v1`
+Base URL: `http://localhost:3000/v1`
 
 | Area | Endpoints |
 |------|-----------|

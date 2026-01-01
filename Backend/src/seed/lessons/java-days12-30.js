@@ -108,7 +108,37 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 15, title: 'Executor Framework', difficulty: 7, estimatedMinutes: 45,
             objectives: ['Use ExecutorService', 'Submit tasks', 'Handle Future', 'Apply CompletableFuture'],
-            contentHtml: `<h2>Executors</h2><pre><code>ExecutorService es = Executors.newFixedThreadPool(4);\nFuture<Integer> future = es.submit(() -> compute());\nInteger result = future.get();</code></pre>`,
+            contentHtml: `<h2>The Executor Framework</h2>
+<p>The Executor framework in Java 5+ separates task submission from task execution, providing a higher-level replacement for working directly with <code>Thread</code>.</p>
+
+<h3>Key Interfaces</h3>
+<ul>
+  <li><strong>Executor:</strong> A simple interface with a <code>execute(Runnable)</code> method.</li>
+  <li><strong>ExecutorService:</strong> Extends Executor with lifecycle management (shutdown) and task submission (submit) features.</li>
+  <li><strong>ScheduledExecutorService:</strong> Supports future and/or periodic execution of tasks.</li>
+</ul>
+
+<h3>Creating Thread Pools</h3>
+<pre><code>// Fixed pool: Reuses a fixed set of threads
+ExecutorService fixed = Executors.newFixedThreadPool(4);
+
+// Cached pool: Creates new threads as needed, reuses idle ones
+ExecutorService cached = Executors.newCachedThreadPool();
+
+// Single thread: Executes tasks sequentially
+ExecutorService single = Executors.newSingleThreadExecutor();</code></pre>
+
+<h3>Handling Results with Future</h3>
+<pre><code>ExecutorService es = Executors.newFixedThreadPool(2);
+Future&lt;Integer&gt; future = es.submit(() -> {
+    Thread.sleep(1000);
+    return 42;
+});
+
+// Do other work...
+
+Integer result = future.get(); // Blocks until result is ready
+es.shutdown();</code></pre>`,
             examples: [
                 { title: 'CompletableFuture', code: `CompletableFuture.supplyAsync(() -> fetchData())\n    .thenApply(data -> process(data))\n    .thenAccept(result -> save(result));`, explanation: 'Async chaining.' },
                 { title: 'Callable', code: `Callable<String> task = () -> "Result";\nFuture<String> future = executor.submit(task);`, explanation: 'Task returning value.' }
@@ -144,7 +174,37 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 17, title: 'JUnit Testing', difficulty: 6, estimatedMinutes: 40,
             objectives: ['Write @Test methods', 'Use assertions', 'Apply lifecycle annotations', 'Run parameterized tests'],
-            contentHtml: `<h2>JUnit 5</h2><pre><code>@Test\nvoid testAdd() {\n    assertEquals(4, add(2, 2));\n}</code></pre>`,
+            contentHtml: `<h2>Unit Testing with JUnit 5</h2>
+<p>JUnit is the standard testing framework for Java. JUnit 5 (Jupiter) is the modular and modern version commonly used today.</p>
+
+<h3>Core Annotations</h3>
+<ul>
+  <li><code>@Test</code>: Marks a method as a test template.</li>
+  <li><code>@BeforeEach</code> / <code>@AfterEach</code>: Executed before/after each test method.</li>
+  <li><code>@BeforeAll</code> / <code>@AfterAll</code>: Executed once before/after all tests in the class (must be static).</li>
+  <li><code>@DisplayName("...")</code>: Custom name for the test.</li>
+</ul>
+
+<h3>Assertions</h3>
+<pre><code>import static org.junit.jupiter.api.Assertions.*;
+
+@Test
+void testCalculator() {
+    assertEquals(4, 2 + 2, "Sum should be 4");
+    assertTrue(5 > 3);
+    assertNotNull(new Object());
+    assertThrows(ArithmeticException.class, () -> {
+        int x = 1 / 0;
+    });
+}</code></pre>
+
+<h3>Parameterized Tests</h3>
+<p>Run the same test with different inputs.</p>
+<pre><code>@ParameterizedTest
+@ValueSource(ints = {1, 2, 3})
+void testPositive(int number) {
+    assertTrue(number > 0);
+}</code></pre>`,
             examples: [
                 { title: 'Parameterized', code: `@ParameterizedTest\n@ValueSource(ints = {1, 2, 3})\nvoid test(int n) {\n    assertTrue(n > 0);\n}`, explanation: 'Test multiple values.' },
                 { title: 'Lifecycle', code: `@BeforeEach\nvoid setup() { ... }`, explanation: 'Setup before tests.' }
@@ -162,7 +222,43 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 18, title: 'Mockito', difficulty: 6, estimatedMinutes: 40,
             objectives: ['Create mocks', 'Define behavior', 'Verify calls', 'Use argument captors'],
-            contentHtml: `<h2>Mockito</h2><pre><code>@Mock UserService service;\nwhen(service.find(1)).thenReturn(user);</code></pre>`,
+            contentHtml: `<h2>Mocking with Mockito</h2>
+<p>Mockito is a popular mocking framework for unit tests in Java. It allows you to create mock objects and define their behavior to isolate the code under test.</p>
+
+<h3>Why Mock?</h3>
+<ul>
+  <li>Isolate dependencies (database, external services).</li>
+  <li>Speed up tests (no real network/disk I/O).</li>
+  <li>Simulate hard-to-reproduce scenarios (errors, timeouts).</li>
+</ul>
+
+<h3>Basic Usage</h3>
+<pre><code>// 1. Create Mock
+List&lt;String&gt; mockedList = mock(List.class);
+
+// 2. Stub Expectations
+when(mockedList.get(0)).thenReturn("first");
+when(mockedList.size()).thenReturn(5);
+
+// 3. Verify Interactions
+mockedList.add("one");
+verify(mockedList).add("one");
+verify(mockedList, times(1)).add("one");
+
+System.out.println(mockedList.get(0)); // "first"</code></pre>
+
+<h3>Using Annotations</h3>
+<pre><code>@ExtendWith(MockitoExtension.class)
+class ServiceTest {
+    @Mock UserRepository repo;
+    @InjectMocks UserService service;
+    
+    @Test
+    void testFind() {
+        when(repo.findById(1)).thenReturn(Optional.of(new User()));
+        service.getUser(1);
+    }
+}</code></pre>`,
             examples: [
                 { title: 'Verify', code: `verify(service, times(1)).save(any());`, explanation: 'Verify method called.' },
                 { title: 'Stub', code: `when(mock.get(0)).thenReturn("first");`, explanation: 'Stub return value.' }
@@ -179,7 +275,32 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 19, title: 'Annotations', difficulty: 6, estimatedMinutes: 40,
             objectives: ['Use built-in annotations', 'Create custom annotations', 'Apply retention policies', 'Process at runtime'],
-            contentHtml: `<h2>Annotations</h2><pre><code>@Retention(RetentionPolicy.RUNTIME)\n@interface MyAnnotation {}</code></pre>`,
+            contentHtml: `<h2>Java Annotations</h2>
+<p>Annotations provide metadata about a program that is not part of the program itself. They have no direct effect on the operation of the code they annotate but can be used by the compiler or at runtime.</p>
+
+<h3>Common Built-in Annotations</h3>
+<ul>
+  <li><code>@Override</code>: Checks that the method is an override.</li>
+  <li><code>@Deprecated</code>: Marks element as obsolete.</li>
+  <li><code>@SuppressWarnings</code>: Suppresses compiler warnings.</li>
+  <li><code>@FunctionalInterface</code>: Ensures interface has exactly one abstract method.</li>
+</ul>
+
+<h3>Creating Custom Annotations</h3>
+<pre><code>import java.lang.annotation.*;
+
+@Retention(RetentionPolicy.RUNTIME) // Available at runtime
+@Target(ElementType.METHOD)         // Can only apply to methods
+public @interface MyAnnotation {
+    String value() default "default";
+    int count() default 1;
+}
+
+// Usage
+class MyClass {
+    @MyAnnotation(value = "Test", count = 5)
+    public void myMethod() {}
+}</code></pre>`,
             examples: [
                 { title: 'Custom', code: `@MyAnnotation\npublic class MyClass {}`, explanation: 'Apply custom annotation.' },
                 { title: 'Processing', code: `if (cls.isAnnotationPresent(MyAnn.class)) { ... }`, explanation: 'Check presence.' }
@@ -196,7 +317,34 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 20, title: 'Reflection', difficulty: 7, estimatedMinutes: 45,
             objectives: ['Inspect classes at runtime', 'Invoke methods dynamically', 'Access fields', 'Create instances'],
-            contentHtml: `<h2>Reflection</h2><pre><code>Class<?> clazz = Class.forName("MyClass");\nMethod[] methods = clazz.getMethods();</code></pre>`,
+            contentHtml: `<h2>Java Reflection API</h2>
+<p>Reflection allows code to inspect and manipulate classes, interfaces, fields, and methods at runtime. It's powerful but should be used sparingly due to performance overhead and broken encapsulation.</p>
+
+<h3>Common Use Cases</h3>
+<ul>
+  <li>Dependency Injection frameworks (Spring).</li>
+  <li>Testing libraries (JUnit).</li>
+  <li>ORMs (Hibernate) mapping objects to tables.</li>
+</ul>
+
+<h3>Inspecting a Class</h3>
+<pre><code>Class&lt;?&gt; clazz = String.class;
+System.out.println("Class Name: " + clazz.getName());
+
+// Get Methods
+Method[] methods = clazz.getMethods();
+for (Method m : methods) {
+    System.out.println(m.getName());
+}
+
+// Instantiate dynamically
+Constructor&lt;?&gt; ctor = clazz.getConstructor(String.class);
+Object str = ctor.newInstance("Hello Reflection");</code></pre>
+
+<h3>Accessing Private Fields</h3>
+<pre><code>Field field = MyClass.class.getDeclaredField("privateData");
+field.setAccessible(true); // Break encapsulation
+Object value = field.get(myInstance);</code></pre>`,
             examples: [
                 { title: 'Invoke', code: `Method m = clazz.getMethod("doSomething");\nm.invoke(instance);`, explanation: 'Dynamic method call.' },
                 { title: 'Fields', code: `Field f = clazz.getDeclaredField("name");\nf.setAccessible(true);`, explanation: 'Access private fields.' }
@@ -230,7 +378,30 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 22, title: 'Spring Boot Intro', difficulty: 7, estimatedMinutes: 50,
             objectives: ['Create Spring Boot app', 'Use @SpringBootApplication', 'Understand auto-configuration', 'Run application'],
-            contentHtml: `<h2>Spring Boot</h2><pre><code>@SpringBootApplication\npublic class App {\n    public static void main(String[] args) {\n        SpringApplication.run(App.class, args);\n    }\n}</code></pre>`,
+            contentHtml: `<h2>Introduction to Spring Boot</h2>
+<p>Spring Boot makes it easy to create stand-alone, production-grade Spring-based Applications that you can "just run". It takes an opinionated view of the Spring platform and third-party libraries so you can get started with minimum fuss.</p>
+
+<h3>Key Features</h3>
+<ul>
+  <li><strong>Auto-configuration:</strong> Automatically configures Spring based on jar dependencies.</li>
+  <li><strong>Standalone:</strong> Run as substantial Java applications using <code>java -jar</code>.</li>
+  <li><strong>Production-ready:</strong> Metrics, health checks, and externalized configuration built-in.</li>
+</ul>
+
+<h3>Main Application Class</h3>
+<pre><code>package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}</code></pre>
+
+<p>The <code>@SpringBootApplication</code> annotation is convenience for <code>@Configuration</code>, <code>@EnableAutoConfiguration</code>, and <code>@ComponentScan</code>.</p>`,
             examples: [
                 { title: 'Controller', code: `@RestController\npublic class HelloController {\n    @GetMapping("/hello")\n    public String hello() { return "Hello!"; }\n}`, explanation: 'Simple REST endpoint.' },
                 { title: 'Test', code: `@SpringBootTest\nclass AppTest { }`, explanation: 'Integration test.' }
@@ -239,7 +410,7 @@ function generateJavaDays15to30() {
             tests: [
                 { id: 't1', description: 'Get path', input: [{ 'controller': '/api' }], expectedOutput: '/api', isHidden: false },
                 { id: 't2', description: 'Root', input: [{ 'controller': '/' }], expectedOutput: '/', isHidden: true },
-                { id: 't3', description: 'Nested', input: [{ 'controller': '/api/v1' }], expectedOutput: '/api/v1', isHidden: true }
+                { id: 't3', description: 'Nested', input: [{ 'controller': '/v1/v1' }], expectedOutput: '/v1/v1', isHidden: true }
             ],
             solution: `public static String solution(Map config) {\n    return (String) config.get("controller");\n}`
         },
@@ -247,7 +418,32 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 23, title: 'REST APIs with Spring', difficulty: 8, estimatedMinutes: 50,
             objectives: ['Create REST controllers', 'Handle path variables', 'Return ResponseEntity', 'Apply validation'],
-            contentHtml: `<h2>REST Controllers</h2><pre><code>@GetMapping("/users/{id}")\npublic User getUser(@PathVariable Long id) {\n    return userService.findById(id);\n}</code></pre>`,
+            contentHtml: `<h2>Building REST Services with Spring</h2>
+<p>Spring Web MVC is the original web framework built on the Servlet API. It allows you to create flexible and loosely coupled web applications.</p>
+
+<h3>@RestController and Request Mapping</h3>
+<ul>
+  <li><code>@RestController</code>: Combines <code>@Controller</code> and <code>@ResponseBody</code>.</li>
+  <li><code>@RequestMapping</code>: Maps HTTP requests to handler methods (or classes).</li>
+  <li><code>@GetMapping</code>, <code>@PostMapping</code>, etc.: Shortcut annotations for specific HTTP methods.</li>
+</ul>
+
+<h3>Example Controller</h3>
+<pre><code>@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable Long id) {
+        return new User(id, "Alice");
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;User&gt; createUser(@RequestBody User user) {
+        // save user...
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
+}</code></pre>`,
             examples: [
                 { title: 'POST', code: `@PostMapping("/users")\npublic ResponseEntity<User> create(@RequestBody User user) {\n    return ResponseEntity.status(201).body(saved);\n}`, explanation: 'Create with status 201.' },
                 { title: 'Exception', code: `@ExceptionHandler(Exception.class)\npublic ResponseEntity<String> handle() { ... }`, explanation: 'Global error handling.' }
@@ -264,7 +460,30 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 24, title: 'Dependency Injection', difficulty: 7, estimatedMinutes: 45,
             objectives: ['Use @Autowired', 'Apply @Component and @Service', 'Understand IoC container', 'Configure beans'],
-            contentHtml: `<h2>Dependency Injection</h2><pre><code>@Service\npublic class UserService {\n    @Autowired\n    private UserRepository repo;\n}</code></pre>`,
+            contentHtml: `<h2>Dependency Injection in Spring</h2>
+<p>Dependency Injection (DI) is a design pattern where the dependencies of a class are provided from the outside (by the Spring IoC Container) rather than created within the class.</p>
+
+<h3>Component Scanning</h3>
+<p>Spring automatically detects beans with these annotations:</p>
+<ul>
+  <li><code>@Component</code>: General purpose stereotype.</li>
+  <li><code>@Service</code>: For business service layer.</li>
+  <li><code>@Repository</code>: For data access layer (DAO).</li>
+  <li><code>@Controller</code>: For web controllers.</li>
+</ul>
+
+<h3>Injection Types</h3>
+<pre><code>@Service
+public class UserService {
+
+    private final UserRepository repository;
+
+    // Constructor Injection (Preferred)
+    @Autowired // Optional in newer Spring versions if only one constructor
+    public UserService(UserRepository repository) {
+        this.repository = repository;
+    }
+}</code></pre>`,
             examples: [
                 { title: 'Constructor injection', code: `public UserService(UserRepository repo) {\n    this.repo = repo;\n}`, explanation: 'Preferred injection method.' },
                 { title: 'Qualifier', code: `@Autowired @Qualifier("main")\nprivate Service service;`, explanation: 'Disambiguation.' }
@@ -281,7 +500,29 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 25, title: 'JPA and Hibernate', difficulty: 8, estimatedMinutes: 55,
             objectives: ['Define entities', 'Use repositories', 'Write JPQL', 'Handle relationships'],
-            contentHtml: `<h2>JPA Entities</h2><pre><code>@Entity\npublic class User {\n    @Id @GeneratedValue\n    private Long id;\n    private String name;\n}</code></pre>`,
+            contentHtml: `<h2>JPA and Hibernate</h2>
+<p>Spring Data JPA reduces the boilerplate code required to implement data access layers for various persistence stores. It sits on top of the Java Persistence API (JPA), usually using Hibernate as the implementation.</p>
+
+<h3>Defining Entities</h3>
+<pre><code>@Entity
+@Table(name = "users")
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+    
+    // Getters and Setters...
+}</code></pre>
+
+<h3>Repositories</h3>
+<p>Simply extending <code>JpaRepository</code> gives you dozens of methods (save, findAll, delete, etc.) for free.</p>
+<pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+    // Custom query methods derived from name
+    List&lt;User&gt; findByName(String name);
+}</code></pre>`,
             examples: [
                 { title: 'Query', code: `@Query("SELECT u FROM User u WHERE u.active = true")\nList<User> findActive();`, explanation: 'Custom JPQL query.' },
                 { title: 'Relations', code: `@OneToMany(mappedBy="user")\nprivate List<Post> posts;`, explanation: 'Entity relationships.' }
@@ -315,7 +556,31 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 27, title: 'Performance Tuning', difficulty: 8, estimatedMinutes: 55,
             objectives: ['Profile applications', 'Tune JVM settings', 'Optimize GC', 'Analyze memory'],
-            contentHtml: `<h2>Performance</h2><pre><code>// JVM options\n-Xmx2g -Xms1g -XX:+UseG1GC</code></pre>`,
+            contentHtml: `<h2>Performance Tuning in Java</h2>
+<p>Java performance tuning involves optimizing the JVM, Garbage Collection (GC), and application code to meet performance requirements.</p>
+
+<h3>JVM Parameters</h3>
+<ul>
+  <li><code>-Xmx</code> / <code>-Xms</code>: Set maximum and initial heap size (e.g., <code>-Xmx4g</code>).</li>
+  <li><code>-XX:+UseG1GC</code>: Use the G1 Garbage Collector (default in modern Java).</li>
+  <li><code>-XX:MaxGCPauseMillis=200</code>: Target pause time for GC.</li>
+</ul>
+
+<h3>Profiling Tools</h3>
+<p>Never optimize without measuring. Use standard tools:</p>
+<ul>
+  <li><strong>VisualVM:</strong> Gui tool for monitoring heap, threads, and CPU.</li>
+  <li><strong>Java Flight Recorder (JFR):</strong> Low-overhead data collection built into the JVM.</li>
+  <li><strong>JMH (Java Microbenchmark Harness):</strong> Essential for micro-benchmarking code snippets accurately.</li>
+</ul>
+
+<h3>Code Optimization Tips</h3>
+<ul>
+  <li>Avoid premature optimization.</li>
+  <li>Use primitives instead of wrappers where possible.</li>
+  <li>Understand the cost of String concatenation (use StringBuilder).</li>
+  <li>Use appropriate collections (e.g., ArrayList vs LinkedList).</li>
+</ul>`,
             examples: [
                 { title: 'Profiling', code: `// Use VisualVM or JProfiler\njcmd <pid> JFR.start`, explanation: 'Flight Recorder for profiling.' },
                 { title: 'Benchmark', code: `@Benchmark\npublic void test() {\n    // JMH benchmark\n}`, explanation: 'Microbenchmarking.' }
@@ -332,7 +597,38 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 28, title: 'Modern Java Features', difficulty: 7, estimatedMinutes: 45,
             objectives: ['Use Records', 'Apply sealed classes', 'Work with pattern matching', 'Use text blocks'],
-            contentHtml: `<h2>Modern Java</h2><pre><code>record Person(String name, int age) {}\nvar json = \"\"\"\n    {"name": "Alice"}\n    \"\"\";</code></pre>`,
+            contentHtml: `<h2>Modern Java Features (Java 14+)</h2>
+<p>Java has evolved significantly. Key modern features improve readability and reduce boilerplate.</p>
+
+<h3>Records (Java 14)</h3>
+<p>Immutable data carriers (like data classes in Kotlin or named tuples).</p>
+<pre><code>public record Person(String name, int age) {}
+
+// Usage
+Person p = new Person("Alice", 30);
+System.out.println(p.name()); // "Alice" (no get prefix)</code></pre>
+
+<h3>Text Blocks (Java 15)</h3>
+<p>Multi-line strings without messy escaping.</p>
+<pre><code>String json = """
+    {
+        "name": "Alice",
+        "age": 30
+    }
+    """;</code></pre>
+
+<h3>Switch Expressions (Java 14)</h3>
+<pre><code>int days = switch(month) {
+    case JAN, MAR, MAY -> 31;
+    case FEB -> 28;
+    default -> 30;
+};</code></pre>
+
+<h3>Pattern Matching for instanceof (Java 16)</h3>
+<pre><code>if (obj instanceof String s) {
+    // 's' is already cast to String here
+    System.out.println(s.length());
+}</code></pre>`,
             examples: [
                 { title: 'Pattern matching', code: `if (obj instanceof String s) {\n    System.out.println(s.length());\n}`, explanation: 'Pattern matching for instanceof.' },
                 { title: 'Sealed Class', code: `public sealed interface Shape permits Circle, Square {}`, explanation: 'Restrict hierarchy.' }
@@ -349,7 +645,23 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 29, title: 'Microservices', difficulty: 9, estimatedMinutes: 60,
             objectives: ['Design services', 'Use REST clients', 'Apply circuit breaker', 'Handle service discovery'],
-            contentHtml: `<h2>Microservices</h2><pre><code>@FeignClient("users")\ninterface UserClient {\n    @GetMapping("/users/{id}")\n    User getUser(@PathVariable Long id);\n}</code></pre>`,
+            contentHtml: `<h2>Microservices with Spring Cloud</h2>
+<p>Microservices architecture structures an application as a collection of loosely coupled services. Spring Cloud builds on Spring Boot to provide common patterns.</p>
+
+<h3>Key Patterns</h3>
+<ul>
+  <li><strong>Service Discovery (Eureka):</strong> Services register dynamically so others can find them without hardcoded URLs.</li>
+  <li><strong>API Gateway (Spring Cloud Gateway):</strong> Single entry point for routing, security, and monitoring.</li>
+  <li><strong>Circuit Breaker (Resilience4j):</strong> Prevent cascading failures when a downstream service is down.</li>
+  <li><strong>Distributed Tracing (Zipkin/Sleuth):</strong> Trace requests across service boundaries.</li>
+</ul>
+
+<h3>Declarative REST Client (Feign)</h3>
+<pre><code>@FeignClient(name = "user-service")
+public interface UserClient {
+    @GetMapping("/users/{id}")
+    User getUser(@PathVariable("id") Long id);
+}</code></pre>`,
             examples: [
                 { title: 'Circuit breaker', code: `@CircuitBreaker(name = "users", fallbackMethod = "fallback")\npublic User getUser(Long id) { }`, explanation: 'Handle failures gracefully.' },
                 { title: 'Feign', code: `@FeignClient("service")\ninterface Client { }`, explanation: 'Declarative REST client.' }
@@ -366,7 +678,48 @@ function generateJavaDays15to30() {
         {
             language: 'java', day: 30, title: 'Capstone Project', difficulty: 10, estimatedMinutes: 90,
             objectives: ['Build complete Spring Boot app', 'Apply all concepts', 'Write tests', 'Document API'],
-            contentHtml: `<h2>Capstone: Task API</h2><p>Build a complete REST API with CRUD operations.</p>`,
+            contentHtml: `<h2>Capstone: Spring Boot Task API</h2>
+<p>Design and implement a production-ready REST API for a Task Management System using Spring Boot.</p>
+
+<h3>Requirements</h3>
+<ol>
+  <li><strong>API Layer:</strong>
+    <ul>
+      <li>CRUD operations for <code>Task</code> resources.</li>
+      <li>Proper HTTP status codes (201 Created, 404 Not Found).</li>
+      <li>Filter tasks by status (e.g., <code>GET /tasks?status=DONE</code>).</li>
+    </ul>
+  </li>
+  <li><strong>Data Layer:</strong>
+    <ul>
+      <li>Use H2 database (in-memory) for simplicity, or PostgreSQL.</li>
+      <li>Use Spring Data JPA for repositories.</li>
+    </ul>
+  </li>
+  <li><strong>Business Logic:</strong>
+    <ul>
+      <li>Service layer to handle validation (e.g., description cannot be empty).</li>
+    </ul>
+  </li>
+  <li><strong>Testing:</strong>
+    <ul>
+      <li>Write integration tests using <code>@SpringBootTest</code> and <code>MockMvc</code>.</li>
+    </ul>
+  </li>
+</ol>
+
+<h3>Project Structure</h3>
+<pre>
+com.example.tasks
+├── controller
+│   └── TaskController.java
+├── service
+│   └── TaskService.java
+├── repository
+│   └── TaskRepository.java
+└── model
+    └── Task.java
+</pre>`,
             examples: [
                 { title: 'Task Controller', code: `@RestController @RequestMapping("/tasks")\npublic class TaskController {\n    @PostMapping\n    public Task create(@RequestBody Task task) { }\n}`, explanation: 'Full CRUD controller.' },
                 { title: 'Service', code: `@Service\npublic class TaskService { }`, explanation: 'Business logic.' }

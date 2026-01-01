@@ -10,7 +10,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /api/v1/submissions:
+ * /v1/submissions:
  *   post:
  *     summary: Create a new submission
  *     tags: [Submissions]
@@ -41,7 +41,7 @@ router.post('/', validateBody(schemas.submission), submissionController.createSu
 
 /**
  * @swagger
- * /api/v1/submissions/{id}:
+ * /v1/submissions/{id}:
  *   get:
  *     summary: Get submission by ID
  *     tags: [Submissions]
@@ -61,7 +61,7 @@ router.get('/:id', validateParams(schemas.submissionIdParam), submissionControll
 
 /**
  * @swagger
- * /api/v1/submissions/{id}/poll:
+ * /v1/submissions/{id}/poll:
  *   get:
  *     summary: Poll submission status
  *     tags: [Submissions]
@@ -85,7 +85,7 @@ router.get(
 
 /**
  * @swagger
- * /api/v1/submissions/history/{language}:
+ * /v1/submissions/history/{language}:
  *   get:
  *     summary: Get submission history for a language
  *     tags: [Submissions]

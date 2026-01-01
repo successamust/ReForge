@@ -1,5 +1,8 @@
 FROM golang:1.21-alpine
 
+# Install dependencies (bash, jq)
+RUN apk add --no-cache bash jq
+
 WORKDIR /runner
 
 # Create sandbox user with limited permissions

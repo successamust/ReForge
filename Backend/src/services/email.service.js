@@ -3,10 +3,11 @@ import config from '../config/index.js';
 import logger from '../utils/logger.js'; // Assuming you have a logger, if not use console
 
 // Set API Key
-if (config.email.sendgridApiKey) {
+if (config.email.sendgridApiKey && config.email.sendgridApiKey.startsWith('SG.')) {
     sgMail.setApiKey(config.email.sendgridApiKey);
 } else {
-    logger.warn('SendGrid API Key not found. Email sending will be disabled.');
+    const reason = !config.email.sendgridApiKey ? 'not found' : 'invalid format (must start with "SG.")';
+    logger.warn(`SendGrid API Key ${reason}. Email sending will be disabled.`);
 }
 
 /**
@@ -41,7 +42,7 @@ async function sendEmail(to, subject, html) {
  * Send verification email
  */
 export async function sendVerificationEmail(to, token) {
-    const verificationUrl = `${config.apiUrl}/api/v1/auth/verify-email?token=${token}`;
+    const verificationUrl = `${config.apiUrl}/v1/auth/verify-email?token=${token}`;
     const subject = 'Verify your email';
     const html = `
         <h1>Verify your email</h1>

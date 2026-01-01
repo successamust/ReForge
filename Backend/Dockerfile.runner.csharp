@@ -1,5 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine
 
+# Install dependencies (bash, jq)
+RUN apk add --no-cache bash jq
+
 WORKDIR /runner
 
 # Create sandbox user with limited permissions

@@ -7,7 +7,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/lessons/{language}:
+ * /v1/lessons/{language}:
  *   get:
  *     summary: Get all lessons overview for a language
  *     tags: [Lessons]
@@ -29,7 +29,7 @@ router.get(
 
 /**
  * @swagger
- * /api/v1/lessons/{language}/current:
+ * /v1/lessons/{language}/current:
  *   get:
  *     summary: Get current lesson based on user progress
  *     tags: [Lessons]
@@ -54,7 +54,7 @@ router.get(
 
 /**
  * @swagger
- * /api/v1/lessons/{language}/{day}:
+ * /v1/lessons/{language}/{day}:
  *   get:
  *     summary: Get specific lesson
  *     tags: [Lessons]

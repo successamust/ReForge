@@ -20,11 +20,11 @@ export async function getGlobalLeaderboard(limit = 100) {
 export async function updateUserRank(userId) {
     try {
         const user = await User.findById(userId);
-        if (!user) return;
+        if (!user) {return;}
 
         // Calculate total stats from progress array
         let passedDays = 0;
-        let totalCompletionTimeMs = 0; // This could be refined to track actual coding time
+        const totalCompletionTimeMs = 0; // This could be refined to track actual coding time
 
         for (const p of user.progress) {
             if (p.completedAt) {

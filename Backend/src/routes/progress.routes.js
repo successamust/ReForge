@@ -10,7 +10,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /api/v1/progress:
+ * /v1/progress:
  *   get:
  *     summary: Get all progress for current user
  *     tags: [Progress]
@@ -24,7 +24,7 @@ router.get('/', progressController.getAllProgress);
 
 /**
  * @swagger
- * /api/v1/progress/achievements:
+ * /v1/progress/achievements:
  *   get:
  *     summary: Get all achievements for current user
  *     tags: [Progress]
@@ -38,7 +38,7 @@ router.get('/achievements', progressController.getUserAchievements);
 
 /**
  * @swagger
- * /api/v1/progress/{language}:
+ * /v1/progress/{language}:
  *   get:
  *     summary: Get progress for a specific language
  *     tags: [Progress]
@@ -58,7 +58,7 @@ router.get('/:language', validateParams(schemas.languageParam), progressControll
 
 /**
  * @swagger
- * /api/v1/progress/{language}/certificate:
+ * /v1/progress/{language}/certificate:
  *   get:
  *     summary: Get certificate info
  *     tags: [Progress]
@@ -82,7 +82,7 @@ router.get(
 
 /**
  * @swagger
- * /api/v1/progress/{language}/certificate/generate:
+ * /v1/progress/{language}/certificate/generate:
  *   post:
  *     summary: Generate certificate PDF
  *     tags: [Progress]

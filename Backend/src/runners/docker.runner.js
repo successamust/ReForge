@@ -51,7 +51,7 @@ export async function runWithDocker(language, code, tests) {
         container = await docker.createContainer({
             Image: image,
             name: containerId,
-            Cmd: ['node', '/runner/executor.js'],
+            Cmd: getExecutionCommand(language),
             Env: [`PAYLOAD=${Buffer.from(payload).toString('base64')}`],
             HostConfig: {
                 Memory: parseMemoryLimit(config.runner.memoryLimit),
@@ -199,5 +199,23 @@ function parseMemoryLimit(limit) {
             return value * 1024 * 1024 * 1024;
         default:
             return value;
+    }
+}
+
+/**
+ * Get execution command for language
+ */
+function getExecutionCommand(language) {
+    switch (language) {
+        case 'javascript':
+            return ['node', '/runner/executor.js'];
+        case 'python':
+            return ['python', '/runner/executor.py'];
+        case 'java':
+        case 'go':
+        case 'csharp':
+            return ['/runner/executor.sh'];
+        default:
+            throw new GradingError(`Unsupported language: ${language}`);
     }
 }

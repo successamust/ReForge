@@ -20,7 +20,14 @@ export async function getProgress(userId, language) {
         throw new NotFoundError('User');
     }
 
+    // Check if progress exists before calling getProgress
+    const progressExists = user.progress.some(p => p.language === language);
     const progress = user.getProgress(language);
+    
+    // If progress was just initialized (not in DB), save it
+    if (!progressExists) {
+        await user.save();
+    }
 
     // Calculate remaining window time if failing
     let remainingWindow = null;

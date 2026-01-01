@@ -4,7 +4,7 @@ import { jest, describe, it, expect } from '@jest/globals';
 import app from '../../src/app.js';
 
 describe('OAuth API', () => {
-    describe('GET /api/v1/auth/google/callback', () => {
+    describe('GET /v1/auth/google/callback', () => {
         it('should handle successful google callback and redirect with token', async () => {
             const mockUser = {
                 user: { email: 'oauth-user@example.com' },
@@ -12,7 +12,7 @@ describe('OAuth API', () => {
             };
 
             const res = await request(app)
-                .get('/api/v1/auth/google/callback')
+                .get('/v1/auth/google/callback')
                 .query({ mock_user: JSON.stringify(mockUser) });
 
             expect(res.status).toBe(302);
@@ -21,7 +21,7 @@ describe('OAuth API', () => {
         });
     });
 
-    describe('GET /api/v1/auth/github/callback', () => {
+    describe('GET /v1/auth/github/callback', () => {
         it('should handle successful github callback and redirect with token', async () => {
             const mockUser = {
                 user: { email: 'github-user@example.com' },
@@ -29,7 +29,7 @@ describe('OAuth API', () => {
             };
 
             const res = await request(app)
-                .get('/api/v1/auth/github/callback')
+                .get('/v1/auth/github/callback')
                 .query({ mock_user: JSON.stringify(mockUser) });
 
             expect(res.status).toBe(302);
