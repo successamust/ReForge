@@ -3,6 +3,7 @@ import config from './config/index.js';
 import connectDatabase from './config/database.js';
 import createRedisClient from './config/redis.js';
 import { startScheduler } from './services/scheduler.service.js';
+import { startWorker } from './workers/grading.worker.js';
 import logger from './utils/logger.js';
 
 const startServer = async () => {
@@ -13,9 +14,10 @@ const startServer = async () => {
         // Initialize Redis
         createRedisClient();
 
-        // Start the scheduler for rollback enforcement
+        // Start subsystems
         if (config.env !== 'test') {
             startScheduler();
+            startWorker();
         }
 
         // Start Express server

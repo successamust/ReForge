@@ -1,77 +1,52 @@
-# 30-Day Coding Challenge Platform - Backend
+# ReForge // Backend _
 
-A production-ready backend system for a 30-day progressive coding challenge platform supporting 5 languages with automated grading, rollback punishment rules, and secure sandboxed execution.
+**The Execution Core.**
 
-## Features
+The backbone of the ReForge platform. A high-performance, secure Node.js environment designed to grade code with ruthless precision.
 
-- **5 Supported Languages**: JavaScript, Python, Java, Go, C#
-- **30 Sequential Days**: Progressive difficulty from fundamentals to senior-level
-- **Automated Grading**: Docker-based sandboxed code execution
-- **Rollback Punishment**: Timezone-aware calendar-day window with strict enforcement
-- **Admin Tools**: Advanced System Dashboard, Lesson CRUD, progress override, audit logging
-- **Gamification**: Daily streaks, points system, and milestone achievements
-- **Monetization**: Tiered access (Free/Premium) with Stripe integration
-- **Social Auth**: Google and GitHub OAuth 2.0 support
-- **Monitoring**: Real-time error tracking and performance profiling via Sentry
-- **Certification**: Automated PDF certificate generation upon completion
+## System Capabilities
 
-## Tech Stack
+### 1. Sandboxed Execution
+Code is never run on the host. Every submission spins up an ephemeral Docker container.
+- **Isolation**: Network access disabled. File system read-only.
+- **Limits**: 256MB RAM. 5s CPU time.
+- **Security**: Root capabilities dropped.
 
-- **Runtime**: Node.js 20+ (ES Modules)
-- **Framework**: Express.js (Versioned API /v1)
-- **Database**: MongoDB with Mongoose
-- **Queue**: BullMQ with Redis
-- **Security**: Strict rate limiting, Helmet, and fail-fast environment validation
-- **Execution**: Docker containers for sandboxed grading
+### 2. Progression Engine
+A state machine that tracks user rehabilitation.
+- **Streak Algorithms**: Timezone-aware expiration logic using Cron + Redis.
+- **Rollback Protocol**: Miss 24 hours? You lose the module.
 
-## Quick Start
+## API Structure
 
-### Prerequisites
+All endpoints are prefixed with `/v1`.
 
-- Node.js 20+
-- MongoDB, Redis, and Docker
+| Context | Route | Purpose |
+|---------|-------|---------|
+| **Auth** | `/auth/*` | JWT & OAuth management |
+| **Practice** | `/submissions/*` | Code queuing & result polling |
+| **Logic** | `/lessons/*` | Curriculum content delivery |
+| **Admin** | `/admin/*` | System telemetry & user management |
 
-### Installation
+## Deployment
 
 ```bash
-cd Backend
-npm install
+# 1. Environment
 cp .env.example .env
-# Edit .env and provide JWT_SECRET (32+ chars)
-```
 
-### Development
+# 2. Database
+npm run seed  # Populates initial curriculum
 
-```bash
-# Seed the database
-npm run seed
-
-# Start development server
+# 3. Launch
 npm run dev
 ```
 
-## API Documentation (v1)
-
-Base URL: `http://localhost:3000/v1`
-
-| Area | Endpoints |
-|------|-----------|
-| **Auth** | `/auth/register`, `/auth/login`, `/auth/google`, `/auth/github` |
-| **Lessons** | `/lessons/:language`, `/lessons/:language/:day` |
-| **Submission** | `/submissions`, `/submissions/:id/poll` |
-| **Progress** | `/progress`, `/progress/achievements`, `/progress/:language/certificate/generate` |
-| **Payments** | `/payments/checkout`, `/payments/webhook` |
-| **Admin** | `/admin/dashboard`, `/admin/users`, `/admin/users/:id/tier` |
-
-Full Swagger UI available at: `http://localhost:3000/api-docs`
-
-## Verification
+## Testing
 
 ```bash
-# Run 38 unit and integration tests
-npm test
+npm test  # Runs 50+ unit/integration tests
 ```
 
-## License
+---
 
-MIT
+**TRUST THE METAL.**

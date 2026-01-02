@@ -61,6 +61,40 @@ router.post('/register', authLimiter, validateBody(schemas.register), authContro
  */
 router.post('/login', authLimiter, validateBody(schemas.login), authController.login);
 
+/**
+ * @swagger
+ * /v1/auth/verify-email:
+ *   post:
+ *     summary: Verify user email with token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/VerifyEmail'
+ *     responses:
+ *       200: { description: Email verified successfully }
+ */
+router.post('/verify-email', authLimiter, validateBody(schemas.verifyEmail), authController.verifyEmail);
+
+/**
+ * @swagger
+ * /v1/auth/resend-verification:
+ *   post:
+ *     summary: Resend verification email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResendVerification'
+ *     responses:
+ *       200: { description: Verification email sent }
+ */
+router.post('/resend-verification', authLimiter, validateBody(schemas.resendVerification), authController.resendVerification);
+
 // Google Auth
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
 router.get(
@@ -76,26 +110,6 @@ router.get(
     passport.authenticate('github', { failureRedirect: '/login', session: false }),
     authController.socialLoginCallback
 );
-
-/**
- * @swagger
- * /v1/auth/verify-email:
- *   post:
- *     summary: Verify email address
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [token]
- *             properties:
- *               token: { type: string }
- *     responses:
- *       200: { description: Email verified }
- */
-router.post('/verify-email', authLimiter, authController.verifyEmail);
 
 /**
  * @swagger
@@ -115,7 +129,7 @@ router.post('/verify-email', authLimiter, authController.verifyEmail);
  *     responses:
  *       200: { description: Reset email sent }
  */
-router.post('/forgot-password', authLimiter, authController.forgotPassword);
+router.post('/forgot-password', authLimiter, validateBody(schemas.resendVerification), authController.forgotPassword);
 
 /**
  * @swagger
@@ -164,6 +178,6 @@ router.get('/profile', authenticate, authController.getProfile);
  *       200:
  *         description: Profile updated
  */
-router.put('/profile', authenticate, authController.updateProfile);
+router.put('/profile', authenticate, validateBody(schemas.updateProfile), authController.updateProfile);
 
 export default router;

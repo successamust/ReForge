@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as lessonController from '../controllers/lesson.controller.js';
 import { validateParams, schemas } from '../utils/validation.js';
-import { authenticate, optionalAuth } from '../middleware/auth.middleware.js';
+import { authenticate, optionalAuth, requireVerified } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -48,6 +48,7 @@ router.get(
 router.get(
     '/:language/current',
     authenticate,
+    requireVerified,
     validateParams(schemas.languageParam),
     lessonController.getCurrentLesson
 );
@@ -75,6 +76,8 @@ router.get(
  */
 router.get(
     '/:language/:day',
+    authenticate,
+    requireVerified,
     validateParams(schemas.lessonParams),
     lessonController.getLesson
 );

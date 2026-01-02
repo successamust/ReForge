@@ -6,18 +6,36 @@ set -e
 # Decode payload
 PAYLOAD=$(echo "$PAYLOAD" | base64 -d)
 
-# Extract code and tests
+# Extract code, tests and operation
 CODE=$(echo "$PAYLOAD" | jq -r '.code')
-TESTS=$(echo "$PAYLOAD" | jq -c '.tests')
+TESTS=$(echo "$PAYLOAD" | jq -c '.tests // []')
+OPERATION=$(echo "$PAYLOAD" | jq -r '.operation // empty')
 
 # Write code to file
 echo "$CODE" > /sandbox/Solution.java
 
 # Compile
 javac /sandbox/Solution.java 2>/tmp/compile_error.txt || {
-  echo "{\"passed\":false,\"details\":[],\"summary\":{\"passedCount\":0,\"total\":$(echo "$TESTS" | jq '. | length')},\"error\":\"$(cat /tmp/compile_error.txt | tr '\n' ' ')\"}"
+  ERROR_FILE="/tmp/compile_error.txt"
+  ERROR_MSG=$(cat "$ERROR_FILE" | head -n 1 | sed 's/"/\\"/g')
+  LINE_NUMBER=$(grep -oE "Solution.java:[0-9]+" "$ERROR_FILE" | head -n 1 | cut -d: -f2 || echo "null")
+  
+  echo "{\"passed\":false,\"error\":\"$ERROR_MSG\",\"location\":{\"line\":$LINE_NUMBER},\"details\":[],\"summary\":{\"passedCount\":0,\"total\":$(echo "$TESTS" | jq '. | length')}}"
   exit 0
 }
+
+if [ "$OPERATION" = "lint" ]; then
+  # Run and capture output (truncated to 10KB for security)
+  OUTPUT=$(timeout 5s java -cp /sandbox Solution 2>&1 | head -c 10000 | sed 's/"/\\"/g' | tr '\n' ' ')
+  echo "{\"passed\":true,\"message\":\"Syntax valid\",\"output\":\"$OUTPUT\"}"
+  exit 0
+fi
+
+# If linting, we are done
+if [ "$OPERATION" = "lint" ]; then
+  echo "{\"passed\":true,\"message\":\"Syntax valid\"}"
+  exit 0
+fi
 
 # Run tests
 RESULTS="[]"

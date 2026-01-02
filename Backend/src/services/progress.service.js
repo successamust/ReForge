@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { User, AuditLog } from '../models/index.js';
+import { User, AuditLog, Submission } from '../models/index.js';
 import { ProgressionError, NotFoundError } from '../utils/errors.js';
 import {
     hasCalendarDayWindowExpired,
@@ -23,7 +23,7 @@ export async function getProgress(userId, language) {
     // Check if progress exists before calling getProgress
     const progressExists = user.progress.some(p => p.language === language);
     const progress = user.getProgress(language);
-    
+
     // If progress was just initialized (not in DB), save it
     if (!progressExists) {
         await user.save();
@@ -114,8 +114,6 @@ export async function advanceProgress(userId, language, day) {
                     'progress.$.failedDay': null,
                     'progress.$.failedAt': null,
                     'progress.$.completedAt': day >= config.maxDays ? new Date() : null,
-                },
-                $inc: {
                     'progress.$.attemptCount': 0, // Reset on pass
                 },
             },
@@ -519,4 +517,44 @@ async function updateUserStats(user, language, day, session) {
     }
 
     await User.updateOne({ _id: user._id }, updateStats, { session });
+}
+
+/**
+ * Get aggregated user stats (Accuracy, Total Submissions)
+ */
+export async function getUserStats(userId) {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new NotFoundError('User');
+    }
+
+    // Aggregate submissions to get accuracy
+    const stats = await Submission.aggregate([
+        { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+        {
+            $group: {
+                _id: null,
+                total: { $sum: 1 },
+                completed: {
+                    $sum: {
+                        $cond: [{ $eq: ["$status", "completed"] }, 1, 0]
+                    }
+                }
+            }
+        }
+    ]);
+
+    const submissionStats = stats[0] || { total: 0, completed: 0 };
+    const accuracy = submissionStats.total > 0
+        ? Math.round((submissionStats.completed / submissionStats.total) * 1000) / 10
+        : 0; // 1 decimal place
+
+    return {
+        streak: user.stats.currentStreak || 0,
+        maxStreak: user.stats.maxStreak || 0,
+        totalPoints: user.stats.totalPoints || 0,
+        accuracy: accuracy,
+        totalSubmissions: submissionStats.total,
+        successfulSubmissions: submissionStats.completed
+    };
 }

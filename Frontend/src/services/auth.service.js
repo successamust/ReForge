@@ -33,6 +33,10 @@ export const authService = {
     return api.post('/auth/verify-email', { token });
   },
 
+  async resendVerification(email) {
+    return api.post('/auth/resend-verification', { email });
+  },
+
   async forgotPassword(email) {
     return api.post('/auth/forgot-password', { email });
   },
@@ -77,4 +81,3 @@ export const authService = {
     }
   }
 };
-

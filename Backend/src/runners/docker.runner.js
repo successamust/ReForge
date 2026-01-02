@@ -27,7 +27,7 @@ const languageExtensions = {
 /**
  * Run code in a Docker container
  */
-export async function runWithDocker(language, code, tests) {
+export async function runWithDocker(language, code, tests, operation = 'test') {
     const startTime = Date.now();
     const image = languageImages[language];
     const ext = languageExtensions[language];
@@ -45,6 +45,7 @@ export async function runWithDocker(language, code, tests) {
             code,
             tests,
             language,
+            operation,
         });
 
         // Create container
@@ -59,7 +60,7 @@ export async function runWithDocker(language, code, tests) {
                 CpuPeriod: 100000,
                 CpuQuota: 50000, // 50% of one CPU
                 NetworkMode: 'none', // No network access
-                AutoRemove: true,
+                AutoRemove: false, // Handle manually to avoid race condition with logs
                 ReadonlyRootfs: true,
                 SecurityOpt: ['no-new-privileges'],
             },
@@ -71,7 +72,8 @@ export async function runWithDocker(language, code, tests) {
         await container.start();
 
         // Wait for container with timeout
-        const timeout = config.runner.timeout;
+        // Use a shorter timeout for lint operations (5s) to free resources faster
+        const timeout = operation === 'lint' ? 5000 : config.runner.timeout;
         const result = await Promise.race([
             waitForContainer(container),
             timeoutPromise(timeout),

@@ -1,4 +1,7 @@
 import * as gradingService from '../services/grading.service.js';
+import { runCode as executeCode } from '../runners/index.js';
+import { Lesson } from '../models/index.js';
+import { NotFoundError } from '../utils/errors.js';
 
 /**
  * Create new submission
@@ -79,6 +82,30 @@ export async function pollSubmission(req, res, next) {
                 resultDetails: submission.resultDetails,
                 finishedAt: submission.finishedAt,
             },
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+/**
+ * Run code immediately without persistence (Scratchpad / Run button)
+ */
+export async function runCode(req, res, next) {
+    try {
+        const { language, day, code } = req.body;
+
+        // Get lesson to get tests
+        const lesson = await Lesson.findByLanguageAndDay(language, day);
+        if (!lesson) {
+            throw new NotFoundError(`Lesson for ${language} day ${day}`);
+        }
+
+        // Run code in sandbox (synchronous execution for Run button)
+        const result = await executeCode(language, code, lesson.getAllTests());
+
+        res.json({
+            success: true,
+            data: { result },
         });
     } catch (error) {
         next(error);

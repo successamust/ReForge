@@ -14,9 +14,49 @@ from io import StringIO
 # Get payload from environment
 payload = json.loads(base64.b64decode(os.environ['PAYLOAD']).decode())
 code = payload['code']
-tests = payload['tests']
+tests = payload.get('tests', [])
+operation = payload.get('operation')
 
 def run_tests():
+    if operation == 'lint':
+        try:
+            compile(code, '<string>', 'exec')
+            
+            # If valid, run to capture output
+            import io
+            import contextlib
+            
+            f = io.StringIO()
+            with contextlib.redirect_stdout(f):
+                try:
+                    exec(code, {'__name__': '__main__'})
+                    passed = True
+                    message = 'Syntax valid'
+                except Exception as run_e:
+                    passed = True # Still passed syntax check
+                    message = f'Syntax valid (Runtime error: {str(run_e)})'
+                    print(f'Runtime Error: {run_e}')
+            
+            output_captured = f.getvalue()
+            if len(output_captured) > 10000:
+                output_captured = output_captured[:10000] + '\n... [Output Truncated for Security]'
+
+            print(json.dumps({
+                'passed': passed, 
+                'message': message,
+                'output': output_captured
+            }))
+        except SyntaxError as e:
+            print(json.dumps({
+                'passed': False, 
+                'error': str(e),
+                'location': {
+                    'line': e.lineno,
+                    'column': e.offset
+                }
+            }))
+        return
+
     results = []
     passed_count = 0
     
@@ -91,7 +131,7 @@ if __name__ == '__main__':
         print(json.dumps({
             'passed': False,
             'details': [],
-            'summary': {'passedCount': 0, 'total': len(tests)},
+            'summary': {'passedCount': 0, 'total': len(tests) if tests else 0},
             'error': str(e)
         }))
         sys.exit(1)

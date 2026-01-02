@@ -92,11 +92,7 @@ const AnimatedLogo = () => {
                             key={`${i}-${currentIndex}`}
                             className="inline-block font-black tracking-tighter text-xl font-mono"
                             animate={{
-                                color: isDecoding
-                                    ? '#00ffff'
-                                    : hasReachedTarget
-                                        ? '#ffffff'
-                                        : '#ffffff',
+                                color: '#ffffff',
                             }}
                             transition={{
                                 duration: 0.05,
@@ -141,6 +137,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Lessons', href: '/lessons', icon: CodeFile },
         { name: 'Leaderboard', href: '/leaderboard', icon: AwardMedal },
+        { name: 'Practice', href: '/practice', icon: CodeTerminal },
         { name: 'Dashboard', href: '/dashboard', icon: CodeTerminal, auth: true },
         { name: 'Admin', href: '/admin', icon: CodeShield, auth: true, adminOnly: true },
     ];

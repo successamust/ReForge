@@ -3,13 +3,84 @@
  * Runs inside Docker container
  */
 
+const vm = require('vm');
+
 const payload = JSON.parse(
     Buffer.from(process.env.PAYLOAD, 'base64').toString()
 );
 
-const { code, tests } = payload;
+const { code, tests, operation } = payload;
 
 async function runTests() {
+    if (operation === 'lint') {
+        try {
+            // Check syntax using vm.Script to catch top-level return
+            new vm.Script(code);
+
+            // If syntax is valid, run to capture console.log
+            const logs = [];
+            const context = vm.createContext({
+                console: {
+                    log: (...args) => logs.push(args.map(a =>
+                        typeof a === 'object' ? JSON.stringify(a) : String(a)
+                    ).join(' ')),
+                    error: (...args) => logs.push(`Error: ${args.join(' ')}`),
+                    warn: (...args) => logs.push(`Warn: ${args.join(' ')}`),
+                },
+                process: { env: {} },
+                Buffer,
+                setTimeout,
+                clearTimeout,
+                setInterval,
+                clearInterval,
+            });
+
+            try {
+                const script = new vm.Script(code);
+                script.runInContext(context, { timeout: 2000 });
+
+                let output = logs.join('\n');
+                if (output.length > 10000) {
+                    output = output.substring(0, 10000) + '\n... [Output Truncated for Security]';
+                }
+
+                process.stdout.write(JSON.stringify({
+                    passed: true,
+                    message: 'Syntax valid',
+                    output: output
+                }));
+            } catch (runError) {
+                // If it fails at runtime (e.g. ReferenceError), we still passed syntax check
+                let output = logs.concat([`Runtime Error: ${runError.message}`]).join('\n');
+                if (output.length > 10000) {
+                    output = output.substring(0, 10000) + '\n... [Output Truncated for Security]';
+                }
+
+                process.stdout.write(JSON.stringify({
+                    passed: true,
+                    message: 'Syntax valid (Runtime error encountered)',
+                    output: output
+                }));
+            }
+        } catch (error) {
+            // Extract location from stack trace if available (evalmachine.<anonymous>:line:column)
+            const lineMatch = error.stack ? error.stack.match(/evalmachine\.<anonymous>:(\d+)(?::(\d+))?/) : null;
+
+            process.stdout.write(JSON.stringify({
+                passed: false,
+                error: error.message,
+                location: lineMatch ? {
+                    line: parseInt(lineMatch[1], 10),
+                    column: lineMatch[2] ? parseInt(lineMatch[2], 10) : 1
+                } : (error.line ? {
+                    line: error.line,
+                    column: error.column || 1
+                } : null)
+            }));
+        }
+        return;
+    }
+
     const results = [];
     let passedCount = 0;
 
@@ -30,7 +101,7 @@ async function runTests() {
         },
     };
 
-    console.log(JSON.stringify(output));
+    process.stdout.write(JSON.stringify(output));
 }
 
 async function runSingleTest(test) {
@@ -89,11 +160,11 @@ async function runSingleTest(test) {
 }
 
 runTests().catch((error) => {
-    console.log(
+    process.stdout.write(
         JSON.stringify({
             passed: false,
             details: [],
-            summary: { passedCount: 0, total: tests.length },
+            summary: { passedCount: 0, total: tests ? tests.length : 0 },
             error: error.message,
         })
     );

@@ -158,7 +158,7 @@ router.get('/users', adminController.getUsers);
  *     security:
  *       - bearerAuth: []
  */
-router.get('/users/:id', adminController.getUser);
+router.get('/users/:id', validateParams(schemas.submissionIdParam), adminController.getUser);
 
 /**
  * @swagger
@@ -169,7 +169,12 @@ router.get('/users/:id', adminController.getUser);
  *     security:
  *       - bearerAuth: []
  */
-router.put('/users/:id', adminController.updateUser);
+router.put(
+    '/users/:id',
+    validateParams(schemas.submissionIdParam),
+    validateBody(schemas.updateUser),
+    adminController.updateUser
+);
 
 /**
  * @swagger

@@ -4,19 +4,61 @@ import logger from '../utils/logger.js';
  * Mock runner for development without Docker
  * Simulates code execution for testing purposes
  */
-export async function runWithMock(language, code, tests) {
+export async function runWithMock(language, code, tests, operation = 'test') {
     const startTime = Date.now();
 
-    logger.debug(`Mock runner executing ${language} code with ${tests.length} tests`);
+    logger.debug(`Mock runner executing ${language} code (operation: ${operation})`);
 
     // Simulate execution delay
-    await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500));
+    await new Promise((resolve) => setTimeout(resolve, 300 + Math.random() * 200));
+
+    if (operation === 'lint') {
+        const hasFunction = /\b(function|def|func|class)\b|=>/.test(code);
+        const hasReturn = /\breturn\b/.test(code);
+        const hasTopLevelReturn = hasReturn && !hasFunction;
+
+        const isRubbish = !code || code.trim().length < 5 ||
+            (language === 'python' && /\bdef\b/.test(code) && !code.includes(':')) ||
+            (language === 'javascript' && /\bfunction\b/.test(code) && !code.includes('{')) ||
+            hasTopLevelReturn ||
+            (/^[asdfghjkl;qwertyuiop\s\n\t]+$/i.test(code.trim()));
+
+        if (isRubbish) {
+            return {
+                passed: false,
+                error: `Syntax Error (Mock): Illegal Return or Invalid structure detected for ${language}.`,
+                location: { line: 1, column: 1 },
+                executionTimeMs: Date.now() - startTime,
+            };
+        }
+
+        return {
+            passed: true,
+            result: {
+                passed: true,
+                message: 'Syntax analysis complete (Mock).',
+                output: (code.includes('console.log') || code.includes('print')) ? '> Hello, Digital World.\n> Transmission received.' : ''
+            },
+            executionTimeMs: Date.now() - startTime,
+        };
+    }
 
     const results = [];
     let passedCount = 0;
 
+    // Blindly pass if no tests provided for non-lint operations
+    if (!tests || tests.length === 0) {
+        return {
+            passed: true,
+            details: [],
+            summary: { passedCount: 0, total: 0 },
+            executionTimeMs: Date.now() - startTime,
+        };
+    }
+
     for (const test of tests) {
         const testStartTime = Date.now();
+        // ... rest of the existing mock logic ...
 
         // Simple mock logic:
         // - If code contains 'error' or 'throw', fail

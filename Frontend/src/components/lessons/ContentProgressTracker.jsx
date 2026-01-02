@@ -2,23 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VerifiedCheck } from '../icons/CustomIcons';
 
-const ContentProgressTracker = ({ sections = [], currentSection = 0 }) => {
+const ContentProgressTracker = ({ sections = [], currentSection = 0, scrollContainerRef }) => {
     const [scrollProgress, setScrollProgress] = useState(0);
     const [viewedSections, setViewedSections] = useState(new Set());
 
     useEffect(() => {
         const handleScroll = () => {
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight - windowHeight;
-            const scrolled = window.scrollY;
-            const progress = (scrolled / documentHeight) * 100;
-            setScrollProgress(Math.min(progress, 100));
+            const container = scrollContainerRef?.current || document.documentElement;
+            const scrolled = scrollContainerRef?.current ? container.scrollTop : window.scrollY;
+            const totalScrollable = container.scrollHeight - container.clientHeight;
+
+            if (totalScrollable > 0) {
+                const progress = (scrolled / totalScrollable) * 100;
+                setScrollProgress(Math.min(progress, 100));
+            }
         };
 
-        window.addEventListener('scroll', handleScroll);
-        handleScroll(); // Initial calculation
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+        const target = scrollContainerRef?.current || window;
+        target.addEventListener('scroll', handleScroll);
+        handleScroll();
+        return () => target.removeEventListener('scroll', handleScroll);
+    }, [scrollContainerRef]);
 
     useEffect(() => {
         if (currentSection >= 0) {
@@ -36,7 +40,7 @@ const ContentProgressTracker = ({ sections = [], currentSection = 0 }) => {
     };
 
     return (
-        <div className="fixed top-20 left-0 right-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <div className="relative z-40 bg-black/80 backdrop-blur-md border-b border-white/10">
             {/* Progress Bar */}
             <div className="relative h-1 bg-white/5">
                 <motion.div

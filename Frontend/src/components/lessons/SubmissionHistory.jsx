@@ -20,7 +20,7 @@ const SubmissionHistory = ({ history, loading }) => {
                         <span className={`font-bold ${sub.status === 'completed' && sub.resultDetails?.passed ? 'text-green-500' : 'text-red-500'}`}>
                             {sub.status === 'completed' && sub.resultDetails?.passed ? 'PASSED' : 'FAILED'}
                         </span>
-                        <span className="text-white/30">{new Date(sub.submittedAt).toLocaleString()}</span>
+                        <span className="text-white/30">{new Date(sub.createdAt).toLocaleString()}</span>
                     </div>
                     <div className="text-white/50 truncate">
                         Duration: {sub.resultDetails?.executionTimeMs || 0}ms

@@ -2,8 +2,12 @@ import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 
-const ProtectedRoute = ({ children, requireAdmin = false, allowUnverified = false }) => {
-    const { isAuthenticated, loading, user } = useContext(AppContext);
+/**
+ * PublicRoute component ensures that authenticated users are redirected 
+ * away from public-only pages (like Login and Register) to the Dashboard.
+ */
+const PublicRoute = ({ children }) => {
+    const { isAuthenticated, loading } = useContext(AppContext);
 
     if (loading) {
         return (
@@ -13,19 +17,11 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowUnverified = fals
         );
     }
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
-
-    if (isAuthenticated && !user?.isVerified && !allowUnverified) {
-        return <Navigate to="/verify-pending" replace />;
-    }
-
-    if (requireAdmin && user?.role !== 'admin') {
+    if (isAuthenticated) {
         return <Navigate to="/dashboard" replace />;
     }
 
     return children;
 };
 
-export default ProtectedRoute;
+export default PublicRoute;

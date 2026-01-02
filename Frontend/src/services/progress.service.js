@@ -5,6 +5,10 @@ export const progressService = {
     return api.get('/progress');
   },
 
+  async getStats() {
+    return api.get('/progress/stats');
+  },
+
   async getProgressByLanguage(language) {
     return api.get(`/progress/${language}`);
   },

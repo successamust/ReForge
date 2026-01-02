@@ -80,3 +80,18 @@ export const requireRole = (...roles) => {
         next();
     };
 };
+
+/**
+ * Require email verification
+ */
+export const requireVerified = (req, res, next) => {
+    if (!req.user) {
+        return next(new AuthenticationError('Authentication required'));
+    }
+
+    if (!req.user.isVerified) {
+        return next(new AuthorizationError('Email verification required'));
+    }
+
+    next();
+};

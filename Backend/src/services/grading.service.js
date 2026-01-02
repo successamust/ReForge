@@ -6,7 +6,6 @@ import * as progressService from './progress.service.js';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
 
-// Create submission queue
 let submissionQueue = null;
 
 export function getSubmissionQueue() {
@@ -31,25 +30,21 @@ export function getSubmissionQueue() {
  * Create a new submission and queue it for grading
  */
 export async function createSubmission(userId, language, day, code) {
-    // Get user to verify progress
     const user = await User.findById(userId);
     if (!user) {
         throw new NotFoundError('User');
     }
 
-    // Check if user can attempt this day
     const canAttempt = await progressService.canAttemptDay(userId, language, day);
     if (!canAttempt.allowed) {
         throw new ProgressionError(canAttempt.reason);
     }
 
-    // Get lesson to verify it exists
     const lesson = await Lesson.findByLanguageAndDay(language, day);
     if (!lesson) {
         throw new NotFoundError(`Lesson for ${language} day ${day}`);
     }
 
-    // Create submission record
     const submission = new Submission({
         userId,
         language,
@@ -60,7 +55,6 @@ export async function createSubmission(userId, language, day, code) {
 
     await submission.save();
 
-    // Queue for grading
     const queue = getSubmissionQueue();
     const job = await queue.add('grade', {
         submissionId: submission._id.toString(),
@@ -136,10 +130,9 @@ export async function processGradingResult(submissionId, result) {
         );
 
         // Update leaderboard asynchronously
-        // We don't await this to keep response fast
-        import('./leaderboard.service.js').then(service => {
-            service.updateUserRank(submission.userId);
-        }).catch(err => logger.error('Leaderboard update failed', err));
+        import('./leaderboard.service.js')
+            .then(m => m.updateUserRank(submission.userId))
+            .catch(err => logger.error('Leaderboard update failed', err));
 
     } else {
         await progressService.recordFailure(
@@ -203,7 +196,6 @@ export async function rerunSubmission(submissionId, adminId) {
     submission.finishedAt = null;
     await submission.save();
 
-    // Queue for re-grading
     const queue = getSubmissionQueue();
     const job = await queue.add('grade', {
         submissionId: submission._id.toString(),

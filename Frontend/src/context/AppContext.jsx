@@ -24,24 +24,24 @@ export const AppProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const addNotification = (notif) => {
+    const addNotification = React.useCallback((notif) => {
         const id = Date.now();
         setNotifications(prev => [...prev, { ...notif, id, msg: notif.message || notif.title || notif.msg }]);
         setTimeout(() => {
             setNotifications(prev => prev.filter(n => n.id !== id));
         }, 5000);
-    };
+    }, []);
 
-    const startSession = () => {
+    const startSession = React.useCallback(() => {
         setIsSessionActive(true);
         addNotification({
             type: 'success',
             title: 'Protocol Active',
             message: 'Entering Manual Mode. Automated assistance disabled.'
         });
-    };
+    }, [addNotification]);
 
-    const login = async (email, password) => {
+    const login = React.useCallback(async (email, password) => {
         try {
             setLoading(true);
             const response = await authService.login(email, password);
@@ -62,9 +62,9 @@ export const AppProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [addNotification]);
 
-    const logout = () => {
+    const logout = React.useCallback(() => {
         authService.logout();
         setUser(null);
         setIsSessionActive(false);
@@ -72,7 +72,7 @@ export const AppProvider = ({ children }) => {
             type: 'success',
             message: 'Logged out successfully'
         });
-    };
+    }, [addNotification]);
 
     return (
         <AppContext.Provider value={{

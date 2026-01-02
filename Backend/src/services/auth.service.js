@@ -10,18 +10,15 @@ import { isValidTimezone } from '../utils/timezone.js';
  * Register a new user
  */
 export async function register(email, password, firstName, lastName, timezone = 'UTC') {
-    // Validate timezone
     if (!isValidTimezone(timezone)) {
         throw new ValidationError('Invalid timezone');
     }
 
-    // Check if user exists
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
         throw new ConflictError('Email already registered');
     }
 
-    // Create user
     const user = new User({
         email,
         passwordHash: password, // Will be hashed by pre-save hook
@@ -33,13 +30,11 @@ export async function register(email, password, firstName, lastName, timezone = 
 
     await user.save();
 
-    // Generate verification token
     const verificationToken = crypto.randomUUID();
     user.verificationToken = verificationToken;
 
     await user.save();
 
-    // Log registration
     await AuditLog.log({
         userId: user._id,
         action: 'ACCOUNT_REGISTER',
@@ -54,7 +49,6 @@ export async function register(email, password, firstName, lastName, timezone = 
         // Don't fail registration if email fails
     }
 
-    // Generate token
     const token = generateToken(user);
 
     return {
@@ -73,8 +67,6 @@ export async function socialLogin(provider, profile) {
         throw new ValidationError('Email address not provided by social provider');
     }
 
-    // Find user by provider ID or email
-    const providerIdField = `${provider}Id`;
     let user = await User.findOne({ [providerIdField]: profile.id });
 
     if (!user) {
@@ -117,7 +109,6 @@ export async function socialLogin(provider, profile) {
         payload: { email, provider },
     });
 
-    // Generate token
     const token = generateToken(user);
 
     return {
@@ -131,18 +122,57 @@ export async function socialLogin(provider, profile) {
  */
 export async function verifyEmail(token) {
     const user = await User.findOne({ verificationToken: token });
+
     if (!user) {
-        throw new ValidationError('Invalid or expired verification token');
+        throw new ValidationError('Invalid verification token');
     }
 
     user.isVerified = true;
-    user.verificationToken = undefined;
+    user.verificationToken = undefined; // Clear the token after verification
+
     await user.save();
 
     await AuditLog.log({
         userId: user._id,
         action: 'EMAIL_VERIFIED',
         payload: {},
+    });
+
+    return { success: true };
+}
+
+/**
+ * Resend verification email
+ */
+export async function resendVerification(email) {
+    const user = await User.findByEmail(email);
+
+    if (!user) {
+        // Don't reveal user existence
+        return;
+    }
+
+    if (user.isVerified) {
+        throw new ConflictError('Email already verified');
+    }
+
+    const verificationToken = crypto.randomUUID();
+    user.verificationToken = verificationToken;
+
+    await user.save();
+
+    // Send verification email
+    try {
+        await emailService.sendVerificationEmail(email, verificationToken);
+    } catch (error) {
+        console.error('Failed to send verification email:', error);
+        throw new Error('Failed to send verification email');
+    }
+
+    await AuditLog.log({
+        userId: user._id,
+        action: 'VERIFICATION_EMAIL_RESENT',
+        payload: { email },
     });
 
     return { success: true };
@@ -205,18 +235,15 @@ export async function resetPassword(token, newPassword) {
  * Login user
  */
 export async function login(email, password, ipAddress = null) {
-    // Find user
     const user = await User.findByEmail(email);
     if (!user) {
         throw new AuthenticationError('Invalid email or password');
     }
 
-    // Check if active
     if (!user.isActive) {
         throw new AuthenticationError('Account is deactivated');
     }
 
-    // Verify password
     const isValid = await user.comparePassword(password);
     if (!isValid) {
         throw new AuthenticationError('Invalid email or password');

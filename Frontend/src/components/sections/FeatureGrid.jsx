@@ -36,7 +36,6 @@ const FeatureGrid = () => {
     return (
         <section ref={ref} className="relative py-40 bg-black overflow-hidden">
             <div className="container mx-auto px-6">
-                {/* Header with scroll animation */}
                 <motion.div
                     style={{ y, opacity }}
                     className="mb-24"
@@ -55,7 +54,6 @@ const FeatureGrid = () => {
                     </p>
                 </motion.div>
 
-                {/* Features Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5">
                     {features.map((feature, i) => (
                         <FeatureCard key={i} feature={feature} />
@@ -84,12 +82,10 @@ const FeatureCard = ({ feature }) => {
             className="bg-black p-12 group relative overflow-hidden"
             whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
         >
-            {/* Number */}
             <div className="absolute top-8 right-8 text-white/5 text-[120px] font-black leading-none">
                 {feature.number}
             </div>
 
-            {/* Icon */}
             <motion.div
                 className="mb-8"
                 whileHover={{ scale: 1.1, rotate: 5 }}
@@ -100,7 +96,6 @@ const FeatureCard = ({ feature }) => {
                 </div>
             </motion.div>
 
-            {/* Content */}
             <h3 className="text-2xl font-black text-white mb-4 tracking-tight">
                 {feature.title}
             </h3>
@@ -108,7 +103,6 @@ const FeatureCard = ({ feature }) => {
                 {feature.desc}
             </p>
 
-            {/* Hover line */}
             <motion.div
                 className="absolute bottom-0 left-0 h-px bg-white"
                 initial={{ width: 0 }}

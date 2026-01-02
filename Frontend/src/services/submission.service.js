@@ -13,6 +13,10 @@ export const submissionService = {
     const params = new URLSearchParams({ limit });
     if (day) params.append('day', day);
     return api.get(`/submissions/history/${language}?${params.toString()}`);
+  },
+
+  async runCode(language, day, code) {
+    return api.post('/submissions/run', { language, day, code });
   }
 };
 

@@ -18,13 +18,26 @@ export async function register(req, res, next) {
 }
 
 /**
- * Verify Email
+ * Verify user email
  */
 export async function verifyEmail(req, res, next) {
     try {
-        const { token } = req.body; // or req.query depending on preference
+        const { token } = req.body;
         await authService.verifyEmail(token);
         res.json({ success: true, message: 'Email verified successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * Resend email verification link
+ */
+export async function resendVerification(req, res, next) {
+    try {
+        const { email } = req.body;
+        await authService.resendVerification(email);
+        res.json({ success: true, message: 'Verification email sent if account exists and is not verified.' });
     } catch (error) {
         next(error);
     }

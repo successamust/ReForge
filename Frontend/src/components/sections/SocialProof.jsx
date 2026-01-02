@@ -24,7 +24,6 @@ const SocialProof = () => {
             </div>
 
             <div className="flex flex-col gap-8 opacity-40">
-                {/* Rolling Row 1 */}
                 <motion.div
                     style={{ x: x1 }}
                     className="flex gap-16 whitespace-nowrap"
@@ -36,7 +35,6 @@ const SocialProof = () => {
                     ))}
                 </motion.div>
 
-                {/* Rolling Row 2 */}
                 <motion.div
                     style={{ x: x2 }}
                     className="flex gap-16 whitespace-nowrap ml-[-200px]"

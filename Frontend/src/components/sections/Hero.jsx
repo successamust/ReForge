@@ -3,7 +3,6 @@ import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'fram
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../../context/AppContext';
 
-// Professional geometric background - no gradients
 const NexusCore = () => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -29,7 +28,6 @@ const NexusCore = () => {
 
   return (
     <div className="nexus-container relative w-full h-full flex items-center justify-center overflow-hidden">
-      {/* Minimal grid - ultra subtle */}
       <div className="absolute inset-0 opacity-[0.02]">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -55,12 +53,10 @@ const NexusCore = () => {
         </svg>
       </div>
 
-      {/* Geometric shapes - minimal, sophisticated */}
       {[...Array(6)].map((_, i) => (
         <GeometricShape key={i} index={i} x={x} y={y} />
       ))}
 
-      {/* Minimal dots - strategic placement */}
       {[...Array(12)].map((_, i) => (
         <GeometricDot key={i} index={i} x={x} y={y} />
       ))}
@@ -142,7 +138,6 @@ const Hero = () => {
   const { scrollYProgress } = useScroll();
   const { startSession, isSessionActive, isAuthenticated } = useContext(AppContext);
 
-  // Advanced scroll transforms
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -200]);
   const backgroundOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const textY = useTransform(scrollYProgress, [0, 0.3], [0, -50]);
@@ -160,7 +155,6 @@ const Hero = () => {
 
   return (
     <section className="relative h-screen w-full flex items-center justify-center bg-black overflow-hidden select-none">
-      {/* Minimal background */}
       <motion.div
         style={{ y: backgroundY, opacity: backgroundOpacity }}
         className="absolute inset-0 z-0 pointer-events-none"
@@ -168,14 +162,12 @@ const Hero = () => {
         <NexusCore />
       </motion.div>
 
-      {/* Content */}
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
           <motion.div
             style={{ y: textY, opacity: textOpacity, scale: textScale }}
             className="flex flex-col items-start"
           >
-            {/* Badge */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -190,7 +182,6 @@ const Hero = () => {
               </div>
             </motion.div>
 
-            {/* Main Headline - Split animation */}
             <div className="mb-8 overflow-hidden">
               <motion.h1
                 initial={{ opacity: 0, y: 50 }}
@@ -210,7 +201,6 @@ const Hero = () => {
               </motion.h1>
             </div>
 
-            {/* Description */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -222,7 +212,6 @@ const Hero = () => {
               </p>
             </motion.div>
 
-            {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -256,7 +245,6 @@ const Hero = () => {
               </Link>
             </motion.div>
 
-            {/* Stats */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -287,7 +275,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

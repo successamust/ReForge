@@ -147,10 +147,16 @@ const UserDashboardPage = () => {
     const loadProgress = async () => {
         try {
             setLoading(true);
-            const response = await progressService.getAllProgress();
+            const [progressResponse, statsResponse] = await Promise.all([
+                progressService.getAllProgress(),
+                progressService.getStats().catch(() => ({ data: { stats: {} } }))
+            ]);
+
             // API interceptor returns response.data, so response is already { success, data }
-            const progressData = response?.data || response || [];
+            const progressData = progressResponse?.data || progressResponse || [];
             const progressArray = Array.isArray(progressData) ? progressData : [];
+            const statsData = statsResponse?.data?.stats || {};
+
             setProgress(progressArray);
 
             // Calculate stats using the array version
@@ -161,8 +167,10 @@ const UserDashboardPage = () => {
             setStats({
                 totalDays,
                 completedDays,
-                currentStreak: 0, // Streak tracking to be implemented
-                languagesActive
+                currentStreak: statsData.streak || 0,
+                languagesActive,
+                accuracy: statsData.accuracy || 0,
+                totalSubmissions: statsData.totalSubmissions || 0
             });
         } catch (error) {
             console.error('Failed to load progress:', error);
@@ -171,7 +179,8 @@ const UserDashboardPage = () => {
                 totalDays: 0,
                 completedDays: 0,
                 currentStreak: 0,
-                languagesActive: 0
+                languagesActive: 0,
+                accuracy: 0
             });
         } finally {
             setLoading(false);
@@ -222,7 +231,7 @@ const UserDashboardPage = () => {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-px bg-white/5 mb-16">
                         {[
-                            { icon: PrecisionTarget, label: 'Total Days', value: stats.totalDays },
+                            { icon: PrecisionTarget, label: 'Accuracy', value: `${stats.accuracy || 0}%` },
                             { icon: VerifiedCheck, label: 'Completed', value: stats.completedDays },
                             { icon: EnergyZap, label: 'Streak', value: stats.currentStreak },
                             { icon: CodeFile, label: 'Languages', value: stats.languagesActive },

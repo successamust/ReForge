@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import * as submissionController from '../controllers/submission.controller.js';
 import { validateBody, validateParams, schemas } from '../utils/validation.js';
-import { authenticate } from '../middleware/auth.middleware.js';
+import { authenticate, requireVerified } from '../middleware/auth.middleware.js';
+import { executionLimiter } from '../middleware/rate-limit.middleware.js';
 
 const router = Router();
 
-// All submission routes require authentication
+// All submission routes require authentication and email verification
 router.use(authenticate);
+router.use(requireVerified);
 
 /**
  * @swagger
@@ -38,6 +40,23 @@ router.use(authenticate);
  *         description: Submission created
  */
 router.post('/', validateBody(schemas.submission), submissionController.createSubmission);
+
+/**
+ * @swagger
+ * /v1/submissions/run:
+ *   post:
+ *     summary: Run code immediately (Scratchpad)
+ *     tags: [Submissions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RunCode'
+ */
+router.post('/run', executionLimiter, validateBody(schemas.submission), submissionController.runCode);
 
 /**
  * @swagger

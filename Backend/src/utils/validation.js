@@ -81,12 +81,27 @@ export const schemas = {
         password: passwordValidation,
     }),
 
+    verifyEmail: Joi.object({
+        token: Joi.string().required(),
+    }),
+
+    resendVerification: Joi.object({
+        email: Joi.string().email().required(),
+    }),
+
     // Submission schemas
     submission: Joi.object({
         language: Joi.string()
             .valid(...config.supportedLanguages)
             .required(),
         day: Joi.number().integer().min(1).max(config.maxDays).required(),
+        code: Joi.string().max(50000).required(),
+    }),
+
+    practice: Joi.object({
+        language: Joi.string()
+            .valid(...config.supportedLanguages)
+            .required(),
         code: Joi.string().max(50000).required(),
     }),
 
@@ -183,6 +198,20 @@ export const schemas = {
         tier: Joi.string().valid('free', 'premium').required(),
         expiresAt: Joi.date().iso().allow(null),
     }),
+
+    // Profile schemas
+    updateProfile: Joi.object({
+        firstName: Joi.string().trim().max(50),
+        lastName: Joi.string().trim().max(50),
+        timezone: Joi.string(),
+    }).min(1),
+
+    // Admin: Update user
+    updateUser: Joi.object({
+        role: Joi.string().valid('user', 'admin'),
+        status: Joi.string().valid('active', 'suspended'),
+        isVerified: Joi.boolean(),
+    }).min(1),
 
     // Startup: Environment variables
     env: Joi.object({

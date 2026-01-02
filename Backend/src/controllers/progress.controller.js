@@ -91,3 +91,20 @@ export async function getUserAchievements(req, res, next) {
         next(error);
     }
 }
+
+/**
+ * Get user stats (accuracy, streak, etc)
+ */
+export async function getStats(req, res, next) {
+    try {
+        const userId = req.userId;
+        const stats = await progressService.getUserStats(userId);
+
+        res.json({
+            success: true,
+            data: { stats },
+        });
+    } catch (error) {
+        next(error);
+    }
+}

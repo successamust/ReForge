@@ -1,8 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { AppProvider, AppContext } from './context/AppContext';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 
 // Homepage Sections
 import Hero from './components/sections/Hero';
@@ -15,7 +16,6 @@ import Pricing from './components/sections/Pricing';
 
 import LoadingSpinner from './components/ui/LoadingSpinner';
 
-// Pages - Lazy Loaded
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
 const OAuthCallbackPage = React.lazy(() => import('./pages/OAuthCallbackPage'));
@@ -30,11 +30,25 @@ const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const AdminDashboardPage = React.lazy(() => import('./pages/AdminDashboardPage'));
 const AdminUsersPage = React.lazy(() => import('./pages/AdminUsersPage'));
 const AdminAuditLogsPage = React.lazy(() => import('./pages/AdminAuditLogsPage'));
+const VerificationPendingPage = React.lazy(() => import('./pages/VerificationPendingPage'));
+const PracticePage = React.lazy(() => import('./pages/PracticePage'));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
+
+const Logout = () => {
+  const { logout } = React.useContext(AppContext);
+  React.useEffect(() => {
+    logout();
+  }, [logout]);
+  return <Navigate to="/login" replace />;
+};
+
+import SEO from './components/SEO';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function HomePage() {
   return (
     <>
+      <SEO title="Home" description="Rebuild your coding muscle. The ultimate developer rehabilitation platform." />
       <Hero />
       <SocialProof />
       <FeatureGrid />
@@ -48,83 +62,100 @@ function HomePage() {
 
 function App() {
   return (
-    <AppProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <MainLayout>
-          <React.Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/auth/success" element={<OAuthCallbackPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/verify-email" element={<EmailVerificationPage />} />
-              <Route path="/lessons" element={<LessonsPage />} />
-              <Route path="/lessons/:language" element={<LessonsPage />} />
-              <Route
-                path="/lessons/:language/:day"
-                element={
-                  <ProtectedRoute>
-                    <LessonDetailPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <UserDashboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/leaderboard"
-                element={
-                  <ProtectedRoute>
-                    <LeaderboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requireAdmin={true}>
-                    <AdminDashboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute requireAdmin={true}>
-                    <AdminUsersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/logs"
-                element={
-                  <ProtectedRoute requireAdmin={true}>
-                    <AdminAuditLogsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </React.Suspense>
-        </MainLayout>
-      </Router>
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <MainLayout>
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<PublicRoute><SEO title="Login" /><LoginPage /></PublicRoute>} />
+                <Route path="/register" element={<PublicRoute><SEO title="Register" /><RegisterPage /></PublicRoute>} />
+                <Route path="/auth/success" element={<OAuthCallbackPage />} />
+                <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+                <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+                <Route path="/verify-email" element={<EmailVerificationPage />} />
+                <Route path="/verify-pending" element={<VerificationPendingPage />} />
+                <Route
+                  path="/practice"
+                  element={
+                    <ProtectedRoute allowUnverified={true}>
+                      <PracticePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/logout" element={<Logout />} />
+                <Route path="/lessons" element={<><SEO title="Curriculum" /><LessonsPage /></>} />
+                <Route path="/lessons/:language" element={<LessonsPage />} />
+                <Route
+                  path="/lessons/:language/:day"
+                  element={
+                    <ProtectedRoute>
+                      <LessonDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <SEO title="Dashboard" />
+                      <UserDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/leaderboard"
+                  element={
+                    <ProtectedRoute>
+                      <SEO title="Leaderboard" />
+                      <LeaderboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <SEO title="Profile" />
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <SEO title="Admin Console" />
+                      <AdminDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <SEO title="User Management" />
+                      <AdminUsersPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/logs"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <SEO title="System Logs" />
+                      <AdminAuditLogsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<><SEO title="404 Not Found" /><NotFoundPage /></>} />
+              </Routes>
+            </React.Suspense>
+          </MainLayout>
+        </Router>
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
 

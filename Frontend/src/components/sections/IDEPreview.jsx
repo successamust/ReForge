@@ -42,10 +42,7 @@ const IDEPreview = () => {
         { name: 'memory.h', icon: Processor, color: 'text-purple-400' },
     ];
 
-    const codeData = `// SESSION: Manual Pointer Reconstruction
-// OBJECTIVE: Implement Ring Buffer from first principles.
-
-package rehab_core
+    const codeData = `package rehab_core
 
 import "reforge/sync"
 

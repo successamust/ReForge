@@ -111,7 +111,6 @@ const ProfilePage = () => {
                     </motion.div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5">
-                        {/* Profile Info */}
                         <motion.div
                             style={{
                                 y: cardY,
@@ -133,7 +132,6 @@ const ProfilePage = () => {
                             </span>
                         </motion.div>
 
-                        {/* Settings */}
                         <motion.div
                             style={{
                                 y: settingsY,

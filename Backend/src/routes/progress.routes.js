@@ -24,6 +24,20 @@ router.get('/', progressController.getAllProgress);
 
 /**
  * @swagger
+ * /v1/progress/stats:
+ *   get:
+ *     summary: Get user stats (accuracy, streak, etc)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User statistics
+ */
+router.get('/stats', progressController.getStats);
+
+/**
+ * @swagger
  * /v1/progress/achievements:
  *   get:
  *     summary: Get all achievements for current user

@@ -49,7 +49,6 @@ const Dashboard = () => {
                         </p>
                     </div>
 
-                    {/* Metrics */}
                     <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-4 xl:pb-0">
                         {detoxMetrics.map((metric, i) => (
                             <MetricCard key={i} metric={metric} isSessionActive={isSessionActive} />
@@ -57,7 +56,6 @@ const Dashboard = () => {
                     </div>
                 </motion.div>
 
-                {/* Phases Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-px bg-white/5">
                     {phases.map((phase, i) => (
                         <PhaseCard key={i} phase={phase} isSessionActive={isSessionActive} />

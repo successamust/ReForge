@@ -1,21 +1,62 @@
-# ReForge
+# ReForge _
 
-**Rebuild Your Muscle. Regain Your Control.**
+![ReForge Design Preview](./assets/design-preview.png)
 
-ReForge is a developer rehabilitation platform designed to help engineers break free from AI reliance and rebuild their manual coding intuition. Through a 30-day "detox" program, users solve algorithmic challenges across multiple languages (JavaScript, Python, Java, Go, C#) with strict constraints—no pasting, no AI assistants, just you and the code.
+> **Rebuild Your Muscle. Regain Your Control.**
 
-## Project Structure
+---
 
-This repository is divided into two main components:
+## 30-Day Challenge
 
-- **[Frontend Documentation](./Frontend/README.md)**: The React-based user interface, featuring a custom IDE, dashboard visualization, and an immersive "hacker" aesthetic.
-- **[Backend Documentation](./Backend/README.md)**: The Node.js/Express API that handles code execution (via Docker), progression logic, user management, and security.
+**Rediscover the joy of the craft.** Whether you're breaking free from AI reliance or reigniting a lost passion, rebuild your engineering intuition through pure, rigorous practice. No shortcuts. No prompts. Just you and the code.
+
+### The Mission
+1.  **30 Days**: A sequential, escalating curriculum.
+2.  **5 Languages**: JavaScript, Python, Java, Go, C#.
+3.  **150+ Lessons**: From data structures to distributed systems.
+
+---
+
+## Architecture
+
+This platform is engineered as a high-performance, sandboxed environment.
+
+| Component | Tech | Responsibility |
+|-----------|------|----------------|
+| **[Frontend](./Frontend)** | React 19 + Vite | Immersive "Hacker-Premium" Interface |
+| **[Backend](./Backend)** | Node.js + Express | API, Auth, & Progression Logic |
+| **Execution** | Docker + BullMQ | Secure, Isolated Code Running |
+| **Persistence** | MongoDB + Redis | User State & Real-time Submissions |
+
+---
 
 ## Getting Started
 
-To run the full stack locally:
+### Prerequisites
+- Node.js 20+
+- Docker (Desktop or Engine)
+- MongoDB & Redis
 
-1.  **Backend**: Navigate to the `Backend` directory and follow the setup instructions to start the API and database.
-2.  **Frontend**: Navigate to the `Frontend` directory and start the Vite development server.
+### Quick Launch
 
-Refer to the respective READMEs for detailed installation and environment configuration steps.
+```bash
+# 1. Clone & Install
+git clone https://github.com/successamust/ReForge.git
+cd platform
+
+# 2. Start Backend (Port 3000)
+cd Backend && npm install && npm run seed && npm run dev
+
+# 3. Start Frontend (Port 5173)
+cd ../Frontend && npm install && npm run dev
+```
+
+---
+
+## The Protocol
+
+- **No Paste**: The editor interface prohibits clipboard usage.
+- **No AI**: External assistance is blocked.
+- **Strict Timing**: Rollback mechanics punish inactivity.
+
+**REFORGE. THE METAL IS WAITING.**

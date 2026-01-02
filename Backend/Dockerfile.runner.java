@@ -1,7 +1,7 @@
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:17-jdk-jammy
 
 # Install dependencies (bash, jq)
-RUN apk add --no-cache bash jq
+RUN apt-get update && apt-get install -y bash jq && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /runner
 
@@ -10,8 +10,8 @@ RUN mkdir -p /runner/lib
 ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.1/junit-platform-console-standalone-1.10.1.jar /runner/lib/junit.jar
 
 # Create sandbox user with limited permissions
-RUN addgroup -g 1001 -S sandbox && \
-    adduser -S sandbox -u 1001 -G sandbox
+RUN groupadd -g 1001 sandbox && \
+    useradd -m -u 1001 -g sandbox -s /bin/bash sandbox
 
 # Create directories for code execution
 RUN mkdir -p /sandbox && chown sandbox:sandbox /sandbox

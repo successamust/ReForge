@@ -1,16 +1,46 @@
-# React + Vite
+# ReForge // Frontend _
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**The Operator's Interface.**
 
-Currently, two official plugins are available:
+This is not just a UI; it is a cockpit for manual code reconstruction. Designed with a "hacker-premium" aesthetic, the Frontend minimizes distraction and maximizes focus.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Visual Identity
 
-## React Compiler
+- **Typography**: Inter (Google Fonts) – Clean, rigorous, legible.
+- **Palette**: `Void Black` (#0A0A0A), `Terminal Green` (#00FF00), `Alert Red` (#FF0000).
+- **Interaction**: High-friction inputs. Every keystroke has weight.
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+## Core Modules
 
-## Expanding the ESLint configuration
+### 1. The IDE (`/src/components/ide`)
+A custom-built, read-only-reference editor.
+- **Monaco Editor** stripped of intelligent features.
+- **Real-time Output Console** streaming raw stdout.
+- **Anti-Cheat Layer** blocking paste events and focus loss.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2. The Dashboard (`/src/components/dashboard`)
+Data visualization for your rehabilitation.
+- **Muscle Memory Graph**: Typing velocity tracking.
+- **Logic Flow Map**: Submission success rates over time.
+- **Streak Monitor**: 24-hour rollback countdown.
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start the dev server
+npm run dev
+```
+
+## Production Build
+
+```bash
+npm run build
+npm run preview
+```
+
+---
+
+**CODE IS THOUGHT. TYPE IT OUT.**
