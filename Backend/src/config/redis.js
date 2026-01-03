@@ -15,8 +15,10 @@ const createRedisClient = () => {
     };
 
     if (config.redis.url) {
+        logger.info(`Initializing Redis client with URL: ${config.redis.url.replace(/:[^:]*@/, ':****@')}`);
         redisClient = new Redis(config.redis.url, redisOptions);
     } else {
+        logger.info(`Initializing Redis client with Host: ${config.redis.host}, Port: ${config.redis.port}`);
         redisClient = new Redis({
             ...redisOptions,
             host: config.redis.host,

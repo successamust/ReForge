@@ -43,7 +43,13 @@ export function startWorker() {
             }
         },
         {
-            connection: getRedisConnection(),
+            connection: config.redis.url
+                ? { url: config.redis.url }
+                : {
+                    host: config.redis.host,
+                    port: config.redis.port,
+                    password: config.redis.password,
+                },
             concurrency: 5,
             limiter: {
                 max: 10,
