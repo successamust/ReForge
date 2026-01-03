@@ -14,6 +14,7 @@ const envSchema = Joi.object({
         ? Joi.string().min(32).required()
         : Joi.string().min(8).required(),
     REDIS_HOST: Joi.string().default('localhost'),
+    REDIS_URL: Joi.string().uri().optional().allow(''),
 }).unknown(true);
 
 const { error, value: envVars } = envSchema.validate(process.env);
@@ -32,6 +33,7 @@ const config = {
     },
 
     redis: {
+        url: process.env.REDIS_URL,
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT, 10) || 6379,
         password: process.env.REDIS_PASSWORD || undefined,

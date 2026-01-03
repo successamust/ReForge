@@ -9,13 +9,21 @@ const createRedisClient = () => {
         return redisClient;
     }
 
-    redisClient = new Redis({
-        host: config.redis.host,
-        port: config.redis.port,
-        password: config.redis.password,
+    const redisOptions = {
         maxRetriesPerRequest: null, // Required for BullMQ
         enableReadyCheck: false,
-    });
+    };
+
+    if (config.redis.url) {
+        redisClient = new Redis(config.redis.url, redisOptions);
+    } else {
+        redisClient = new Redis({
+            ...redisOptions,
+            host: config.redis.host,
+            port: config.redis.port,
+            password: config.redis.password,
+        });
+    }
 
     redisClient.on('connect', () => {
         logger.info('Redis connected');
