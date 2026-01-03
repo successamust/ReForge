@@ -93,12 +93,37 @@ export async function runWithDocker(language, code, tests, operation = 'test') {
         const output = parseContainerLogs(logs);
 
         try {
-            const parsed = JSON.parse(output.stdout);
+            // Try parsing the whole output first
+            const parsed = JSON.parse(output.stdout.trim());
             parsed.executionTimeMs = Date.now() - startTime;
             return parsed;
         } catch (parseError) {
+            // Fallback: Try to find the JSON object if there's extra noise (like console.logs)
+            // We look for the last occurrence of '{' and matching '}' or similar simple heuristic
+            // This is a naive heuristic but better than failing immediately
+            try {
+                const stdout = output.stdout.trim();
+                const jsonStartIndex = stdout.lastIndexOf('{');
+                const jsonEndIndex = stdout.lastIndexOf('}');
+
+                if (jsonStartIndex !== -1 && jsonEndIndex !== -1 && jsonEndIndex > jsonStartIndex) {
+                    const potentialJson = stdout.substring(jsonStartIndex, jsonEndIndex + 1);
+                    const parsed = JSON.parse(potentialJson);
+
+                    // VALIDATION CHECK: Ensure this looks like a real grading result
+                    // This prevents accepting random JSON that a user might have printed
+                    if (typeof parsed.passed === 'boolean' && parsed.summary && Array.isArray(parsed.tests)) {
+                        parsed.executionTimeMs = Date.now() - startTime;
+                        parsed.userOutput = stdout.substring(0, jsonStartIndex).trim();
+                        return parsed;
+                    }
+                }
+            } catch (fallbackError) {
+                // Ignore fallback error and throw original
+            }
+
             logger.error('Failed to parse container output:', output);
-            throw new GradingError('Invalid runner output');
+            throw new GradingError('Invalid runner output - could not parse result JSON');
         }
     } catch (error) {
         if (error instanceof GradingError) {

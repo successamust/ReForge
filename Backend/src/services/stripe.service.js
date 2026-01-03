@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
 
+
 let stripe = null;
 
 if (process.env.STRIPE_SECRET_KEY) {
@@ -61,7 +62,8 @@ export async function handleWebhook(body, signature) {
         );
     } catch (err) {
         logger.error('Webhook signature verification failed.', err.message);
-        throw new Error('Webhook error');
+        // Important: Return 400 to Stripe so it doesn't keep retrying a bad request
+        throw new Error(`Webhook Error: ${err.message}`);
     }
 
     // Handle the event
@@ -79,6 +81,7 @@ export async function handleWebhook(body, signature) {
 }
 
 async function grantAccess(userId, subscriptionId) {
-    // Logic to update user tier in DB
-    logger.info(`Granting premium access to user ${userId}`);
+    // Payments are currently disabled/deferred.
+    // This is a explicit placeholder for future implementation.
+    logger.info(`[Placeholder] Would grant premium access to user ${userId} for subscription ${subscriptionId}`);
 }

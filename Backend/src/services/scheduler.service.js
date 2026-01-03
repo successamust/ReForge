@@ -29,7 +29,10 @@ export async function processExpiredWindows() {
         // Use indexed query on progress.failedAt
         const usersWithFailures = await User.find({
             'progress.failedAt': { $ne: null },
-            'progress.adminOverride': { $ne: true },
+
+            // Removed 'progress.adminOverride': { $ne: true } because it filters out the whole user
+            // if ANY language has an override, preventing valid rollbacks for other languages.
+            // The loop below handles the per-language check correctly.
             isActive: true,
         }).select('_id email timezone progress');
 

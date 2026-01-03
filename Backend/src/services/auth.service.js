@@ -67,6 +67,7 @@ export async function socialLogin(provider, profile) {
         throw new ValidationError('Email address not provided by social provider');
     }
 
+    const providerIdField = provider === 'google' ? 'googleId' : 'githubId';
     let user = await User.findOne({ [providerIdField]: profile.id });
 
     if (!user) {
