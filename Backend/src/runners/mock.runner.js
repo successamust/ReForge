@@ -104,6 +104,8 @@ export async function runWithMock(language, code, tests, operation = 'test') {
             durationMs: Date.now() - testStartTime,
             isHidden: test.isHidden,
             hint: !passed && test.hint ? test.hint : undefined,
+            expected: test.expectedOutput,
+            actual: passed ? test.expectedOutput : 'Heuristic failure',
         });
     }
 

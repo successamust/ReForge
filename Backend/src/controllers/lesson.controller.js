@@ -1,9 +1,6 @@
 import { Lesson } from '../models/index.js';
 import { NotFoundError } from '../utils/errors.js';
 
-/**
- * Get lesson by language and day
- */
 export async function getLesson(req, res, next) {
     try {
         const { language, day } = req.params;
@@ -23,9 +20,6 @@ export async function getLesson(req, res, next) {
     }
 }
 
-/**
- * Get all lessons for a language (overview only)
- */
 export async function getLessonsByLanguage(req, res, next) {
     try {
         const { language } = req.params;
@@ -47,9 +41,6 @@ export async function getLessonsByLanguage(req, res, next) {
     }
 }
 
-/**
- * Get lesson content for current user's progress
- */
 export async function getCurrentLesson(req, res, next) {
     try {
         const { language } = req.params;
@@ -74,6 +65,44 @@ export async function getCurrentLesson(req, res, next) {
                     attemptCount: progress.attemptCount,
                 },
             },
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function getStats(req, res, next) {
+    try {
+        const { Submission } = await import('../models/index.js');
+        const heatmap = await Submission.aggregate([
+            {
+                $group: {
+                    _id: { language: "$language", day: "$day" },
+                    total: { $sum: 1 },
+                    success: {
+                        $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }
+                    }
+                }
+            },
+            {
+                $project: {
+                    language: "$_id.language",
+                    day: "$_id.day",
+                    rate: {
+                        $cond: [
+                            { $gt: ["$total", 0] },
+                            { $multiply: [{ $divide: ["$success", "$total"] }, 100] },
+                            0
+                        ]
+                    },
+                    total: 1
+                }
+            }
+        ]);
+
+        res.json({
+            success: true,
+            data: { heatmap },
         });
     } catch (error) {
         next(error);

@@ -82,4 +82,13 @@ router.get(
     lessonController.getLesson
 );
 
+/**
+ * @swagger
+ * /v1/lessons/stats/global:
+ *   get:
+ *     summary: Get global lesson stats (heatmap data)
+ *     tags: [Lessons]
+ */
+router.get('/stats/global', authenticate, lessonController.getStats);
+
 export default router;

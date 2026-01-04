@@ -22,7 +22,8 @@ const LeaderboardPage = () => {
             setLoading(true);
             const response = await leaderboardService.getLeaderboard(selectedLanguage);
             // API interceptor returns response.data, so response is already { success, data }
-            const leaderboardData = response?.data || response || [];
+            // Backend returns { success: true, data: leaderboard } where data is the array directly
+            const leaderboardData = response?.data || [];
             setLeaderboard(Array.isArray(leaderboardData) ? leaderboardData : []);
         } catch (error) {
             console.error('Failed to load leaderboard:', error);
@@ -155,9 +156,19 @@ const LeaderboardPage = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-8 py-6 text-right">
-                                                        <span className={`text-xs font-bold uppercase tracking-widest ${rank === 1 ? 'text-white' : rank <= 10 ? 'text-white/80' : 'text-white/40'
+                                                        <span className={`text-xs font-bold uppercase tracking-widest ${rank === 1 ? 'text-white' :
+                                                                rank <= 3 ? 'text-white/95' :
+                                                                    rank <= 10 ? 'text-white/85' :
+                                                                        rank <= 25 ? 'text-white/70' :
+                                                                            rank <= 50 ? 'text-white/55' :
+                                                                                'text-white/40'
                                                             }`}>
-                                                            {rank === 1 ? 'Elite' : rank <= 10 ? 'Verified' : 'Active'}
+                                                            {rank === 1 ? '🏆 Champion' :
+                                                                rank <= 3 ? '💎 Elite' :
+                                                                    rank <= 10 ? '⭐ Master' :
+                                                                        rank <= 25 ? '✓ Verified' :
+                                                                            rank <= 50 ? '→ Rising' :
+                                                                                '• Active'}
                                                         </span>
                                                     </td>
                                                 </motion.tr>

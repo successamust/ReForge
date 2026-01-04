@@ -25,14 +25,8 @@ export async function processExpiredWindows() {
     };
 
     try {
-        // Find users with active failure tracking
-        // Use indexed query on progress.failedAt
         const usersWithFailures = await User.find({
             'progress.failedAt': { $ne: null },
-
-            // Removed 'progress.adminOverride': { $ne: true } because it filters out the whole user
-            // if ANY language has an override, preventing valid rollbacks for other languages.
-            // The loop below handles the per-language check correctly.
             isActive: true,
         }).select('_id email timezone progress');
 
@@ -47,7 +41,6 @@ export async function processExpiredWindows() {
                 results.processed++;
 
                 try {
-                    // Check if window has expired
                     const expired = hasCalendarDayWindowExpired(
                         progress.failedAt,
                         user.timezone
@@ -58,11 +51,10 @@ export async function processExpiredWindows() {
                         continue;
                     }
 
-                    // Apply rollback
                     const rollbackResult = await progressService.applyRollback(
                         user._id,
                         progress.language,
-                        true // isSystem
+                        true
                     );
 
                     if (rollbackResult) {
@@ -94,13 +86,9 @@ export async function processExpiredWindows() {
     }
 }
 
-/**
- * Start the scheduler
- */
 export function startScheduler() {
     const intervalMinutes = config.scheduler.intervalMinutes;
 
-    // Run every N minutes
     const cronExpression = `*/${intervalMinutes} * * * *`;
 
     logger.info(`Starting rollback scheduler with interval: ${intervalMinutes} minutes`);

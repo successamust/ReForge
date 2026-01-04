@@ -11,6 +11,10 @@ export const lessonService = {
 
   async getLesson(language, day) {
     return api.get(`/lessons/${language}/${day}`);
+  },
+
+  async getGlobalStats() {
+    return api.get('/lessons/stats/global');
   }
 };
 

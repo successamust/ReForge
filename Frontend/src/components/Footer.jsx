@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Github, Twitter, Linkedin, Terminal } from 'lucide-react';
 import Badge from './ui/Badge';
+import { AppContext } from '../context/AppContext';
 
 const Footer = () => {
+    const { user } = useContext(AppContext);
+    const isAdmin = user?.role === 'admin';
+
     return (
         <footer className="bg-black border-t border-white/5 py-24 relative overflow-hidden">
             <div className="container mx-auto px-6 relative z-10">
@@ -26,9 +30,14 @@ const Footer = () => {
                     <div>
                         <h4 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Platform</h4>
                         <ul className="space-y-4">
-                            {['Curriculum', 'Leaderboard', 'Achievements', 'Pricing'].map(item => (
-                                <li key={item}>
-                                    <a href="#" className="text-white/40 hover:text-white font-bold text-sm transition-colors">{item}</a>
+                            {[
+                                { name: 'Curriculum', path: '/lessons' },
+                                { name: 'Leaderboard', path: '/leaderboard' },
+                                { name: 'Achievements', path: '/dashboard' },
+                                { name: 'Pricing', path: '/#pricing' }
+                            ].map(item => (
+                                <li key={item.name}>
+                                    <a href={item.path} className="text-white/40 hover:text-white font-bold text-sm transition-colors">{item.name}</a>
                                 </li>
                             ))}
                         </ul>
@@ -37,9 +46,21 @@ const Footer = () => {
                     <div>
                         <h4 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">System</h4>
                         <ul className="space-y-4">
-                            {['Status', 'Docs', 'API Reference', 'Security'].map(item => (
-                                <li key={item}>
-                                    <a href="#" className="text-white/40 hover:text-white font-bold text-sm transition-colors">{item}</a>
+                            {[
+                                { name: 'Status', path: '/status', adminOnly: true },
+                                { name: 'Docs', path: '/docs' },
+                                { name: 'API Reference', path: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3088/v1'}`.replace('/v1', '/api-docs'), external: true, adminOnly: true },
+                                { name: 'Security', path: '/security' }
+                            ].filter(item => !item.adminOnly || isAdmin).map(item => (
+                                <li key={item.name}>
+                                    <a
+                                        href={item.path}
+                                        target={item.external ? "_blank" : "_self"}
+                                        rel={item.external ? "noopener noreferrer" : ""}
+                                        className="text-white/40 hover:text-white font-bold text-sm transition-colors"
+                                    >
+                                        {item.name}
+                                    </a>
                                 </li>
                             ))}
                         </ul>

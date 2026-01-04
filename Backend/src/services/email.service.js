@@ -1,6 +1,6 @@
 import sgMail from '@sendgrid/mail';
 import config from '../config/index.js';
-import logger from '../utils/logger.js'; // Assuming you have a logger, if not use console
+import logger from '../utils/logger.js';
 
 // Set API Key
 if (config.email.sendgridApiKey && config.email.sendgridApiKey.startsWith('SG.')) {
@@ -42,7 +42,7 @@ async function sendEmail(to, subject, html) {
  * Send verification email
  */
 export async function sendVerificationEmail(to, token) {
-    const verificationUrl = `${config.apiUrl}/v1/auth/verify-email?token=${token}`;
+    const verificationUrl = `${config.frontendUrl}/verify-email?token=${token}`;
     const subject = 'Verify your email';
     const html = `
         <h1>Verify your email</h1>
@@ -57,9 +57,7 @@ export async function sendVerificationEmail(to, token) {
  * Send password reset email
  */
 export async function sendPasswordResetEmail(to, token) {
-    // In a real app, this would point to the frontend reset page
-    // For now, we point to the API endpoint or a placeholder frontend URL
-    const resetUrl = `${config.apiUrl}/reset-password?token=${token}`;
+    const resetUrl = `${config.frontendUrl}/reset-password?token=${token}`;
     const subject = 'Reset your password';
     const html = `
         <h1>Reset your password</h1>

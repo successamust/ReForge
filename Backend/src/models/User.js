@@ -43,7 +43,6 @@ const progressSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
-    // Flag to indicate if progress was manually overridden by admin
     adminOverride: {
         type: Boolean,
         default: false,
@@ -117,10 +116,8 @@ const userSchema = new mongoose.Schema({
     timestamps: true,
 });
 
-// Index for scheduler queries - find users with expired failure windows
 userSchema.index({ 'progress.failedAt': 1, 'progress.adminOverride': 1 });
 
-// Pre-save hook to hash password
 userSchema.pre('save', async function (next) {
     if (!this.isModified('passwordHash')) {
         return next();
@@ -135,7 +132,6 @@ userSchema.pre('save', async function (next) {
     }
 });
 
-// Method to compare passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.passwordHash);
 };
@@ -163,7 +159,6 @@ userSchema.methods.getProgress = function (language) {
     return progress;
 };
 
-// Method to safely get user object without sensitive data
 userSchema.methods.toSafeObject = function () {
     const obj = this.toObject();
     delete obj.passwordHash;
@@ -171,7 +166,6 @@ userSchema.methods.toSafeObject = function () {
     return obj;
 };
 
-// Static method to find by email
 userSchema.statics.findByEmail = function (email) {
     return this.findOne({ email: email.toLowerCase() });
 };

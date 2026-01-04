@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Confetti from 'react-confetti';
 import Button from '../components/ui/Button';
 import { CodeFile, Processor, RunPlay, VerifiedCheck } from '../components/icons/CustomIcons';
+import api from '../services/api';
 import { lessonService } from '../services/lesson.service';
 import { submissionService } from '../services/submission.service';
 import { AppContext } from '../context/AppContext';
@@ -11,6 +12,8 @@ import SubmissionHistory from '../components/lessons/SubmissionHistory';
 import ContentProgressTracker from '../components/lessons/ContentProgressTracker';
 import CopyableCodeBlock from '../components/lessons/CopyableCodeBlock';
 import LessonSection from '../components/lessons/LessonSection';
+import AchievementToast from '../components/ui/AchievementToast';
+import { AnimatePresence } from 'framer-motion';
 
 const LessonDetailPage = () => {
     const { language, day } = useParams();
@@ -28,6 +31,8 @@ const LessonDetailPage = () => {
     const [showHistory, setShowHistory] = useState(false);
     const [currentSection, setCurrentSection] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
+    const [activeAchievement, setActiveAchievement] = useState(null);
+    const [lessonContent, setLessonContent] = useState([]);
     const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
     const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
 
@@ -69,6 +74,11 @@ const LessonDetailPage = () => {
     const loadLesson = React.useCallback(async () => {
         try {
             setLoading(true);
+            // Fetch progress first to ensure enrollment is recorded
+            if (isAuthenticated) {
+                await api.get(`/progress/${language}`);
+            }
+
             const response = await lessonService.getLesson(language, parseInt(day));
             const lessonData = response?.data?.lesson || response?.lesson || response;
             setLesson(lessonData);
@@ -182,9 +192,24 @@ const LessonDetailPage = () => {
                     if (submission.resultDetails?.details) {
                         submission.resultDetails.details.forEach((test, i) => {
                             if (!test.passed) {
-                                newOutput.push({ type: 'error', text: `[Test ${i + 1}] ${test.stderr || 'Unexpected output'}` });
+                                newOutput.push({ type: 'error', text: `[Test ${i + 1}] FAILED` });
+                                if (test.expected !== undefined && test.actual !== undefined) {
+                                    newOutput.push({ type: 'error', text: `   Expected: ${JSON.stringify(test.expected)}` });
+                                    newOutput.push({ type: 'error', text: `   Actual:   ${JSON.stringify(test.actual)}` });
+                                }
+                                if (test.stderr) {
+                                    newOutput.push({ type: 'error', text: `   Error: ${test.stderr}` });
+                                }
                             }
                         });
+                    }
+
+                    // Check for new achievements
+                    if (submission.newAchievements?.length > 0) {
+                        const latest = submission.newAchievements[0];
+                        setActiveAchievement(latest);
+                        // Auto-clear toast after 8 seconds if not dismissed
+                        setTimeout(() => setActiveAchievement(null), 8000);
                     }
 
                     setOutput(newOutput);

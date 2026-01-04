@@ -224,4 +224,22 @@ router.get('/audit-logs', adminController.getAuditLogs);
  */
 router.get('/reports/users', adminController.exportUserReport);
 
+/**
+ * @swagger
+ * /v1/admin/heatmap:
+ *   get:
+ *     summary: Get difficulty heatmap
+ *     tags: [Admin]
+ */
+router.get('/heatmap', adminController.getDifficultyHeatmap);
+
+/**
+ * @swagger
+ * /v1/admin/submissions/{id}/code:
+ *   get:
+ *     summary: Get submission code
+ *     tags: [Admin]
+ */
+router.get('/submissions/:id/code', adminController.getSubmissionCode);
+
 export default router;

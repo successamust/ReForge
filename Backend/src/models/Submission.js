@@ -25,6 +25,14 @@ const testResultSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    expected: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+    },
+    actual: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+    },
     // For hidden tests, don't expose details
     isHidden: {
         type: Boolean,
@@ -99,6 +107,10 @@ const submissionSchema = new mongoose.Schema({
     jobId: {
         type: String,
         default: null,
+    },
+    newAchievements: {
+        type: Array,
+        default: [],
     },
     finishedAt: {
         type: Date,

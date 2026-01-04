@@ -81,6 +81,9 @@ export async function generateCertificate(req, res, next) {
 export async function getUserAchievements(req, res, next) {
     try {
         const userId = req.userId;
+        // Trigger a sync check to ensure achievements are up to date for existing users
+        await achievementService.checkAchievements(userId, { sync: true });
+
         const achievements = await achievementService.getUserAchievements(userId);
 
         res.json({

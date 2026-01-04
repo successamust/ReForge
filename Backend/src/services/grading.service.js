@@ -26,9 +26,6 @@ export function getSubmissionQueue() {
     return submissionQueue;
 }
 
-/**
- * Create a new submission and queue it for grading
- */
 export async function createSubmission(userId, language, day, code) {
     const user = await User.findById(userId);
     if (!user) {
@@ -76,9 +73,6 @@ export async function createSubmission(userId, language, day, code) {
     return submission.toUserObject();
 }
 
-/**
- * Get submission by ID
- */
 export async function getSubmission(submissionId, userId = null) {
     const query = { _id: submissionId };
     if (userId) {
@@ -93,16 +87,10 @@ export async function getSubmission(submissionId, userId = null) {
     return submission.toUserObject();
 }
 
-/**
- * Get submission history for a user
- */
 export async function getSubmissionHistory(userId, language, options = {}) {
     return Submission.getHistory(userId, language, options);
 }
 
-/**
- * Process grading result (called by worker)
- */
 export async function processGradingResult(submissionId, result) {
     const submission = await Submission.findById(submissionId);
     if (!submission) {
@@ -113,7 +101,17 @@ export async function processGradingResult(submissionId, result) {
     submission.status = result.passed ? 'completed' : 'failed';
     submission.resultDetails = {
         passed: result.passed,
-        details: result.details,
+        details: result.details.map(t => ({
+            testId: t.testId,
+            passed: t.passed,
+            stdout: t.stdout,
+            stderr: t.stderr,
+            durationMs: t.durationMs,
+            hint: t.hint,
+            expected: t.expected,
+            actual: t.actual,
+            isHidden: t.isHidden
+        })),
         summary: result.summary,
         executionTimeMs: result.executionTimeMs,
     };
@@ -123,11 +121,37 @@ export async function processGradingResult(submissionId, result) {
 
     // Update user progress based on result
     if (result.passed) {
-        await progressService.advanceProgress(
+        // Calculate completion time in minutes
+        const completionTimeMs = submission.finishedAt - submission.createdAt;
+        const completionTimeMinutes = completionTimeMs / (1000 * 60);
+
+        // Check if this is the first try (no previous failed submissions for this day)
+        const previousFailedCount = await Submission.countDocuments({
+            userId: submission.userId,
+            language: submission.language,
+            day: submission.day,
+            status: 'failed',
+            createdAt: { $lt: submission.createdAt }
+        });
+
+        const isFirstTry = previousFailedCount === 0;
+
+        // Pass scoring data to advanceProgress
+        const progressResult = await progressService.advanceProgress(
             submission.userId,
             submission.language,
-            submission.day
+            submission.day,
+            {
+                completionTimeMinutes,
+                isFirstTry
+            }
         );
+
+        // Store new achievements if any
+        if (progressResult.newAchievements?.length > 0) {
+            submission.newAchievements = progressResult.newAchievements;
+            await submission.save();
+        }
 
         // Update leaderboard asynchronously
         import('./leaderboard.service.js')
@@ -150,9 +174,6 @@ export async function processGradingResult(submissionId, result) {
     return submission.toUserObject();
 }
 
-/**
- * Mark submission as errored
- */
 export async function markSubmissionError(submissionId, errorMessage) {
     const submission = await Submission.findById(submissionId);
     if (!submission) {
@@ -175,9 +196,6 @@ export async function markSubmissionError(submissionId, errorMessage) {
     return submission;
 }
 
-/**
- * Admin: Re-run a submission
- */
 export async function rerunSubmission(submissionId, adminId) {
     const submission = await Submission.findById(submissionId);
     if (!submission) {

@@ -32,6 +32,9 @@ const AdminUsersPage = React.lazy(() => import('./pages/AdminUsersPage'));
 const AdminAuditLogsPage = React.lazy(() => import('./pages/AdminAuditLogsPage'));
 const VerificationPendingPage = React.lazy(() => import('./pages/VerificationPendingPage'));
 const PracticePage = React.lazy(() => import('./pages/PracticePage'));
+const StatusPage = React.lazy(() => import('./pages/StatusPage'));
+const DocsPage = React.lazy(() => import('./pages/DocsPage'));
+const SecurityPage = React.lazy(() => import('./pages/SecurityPage'));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 
 const Logout = () => {
@@ -149,6 +152,16 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/status"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <StatusPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/docs" element={<DocsPage />} />
+                <Route path="/security" element={<SecurityPage />} />
                 <Route path="*" element={<><SEO title="404 Not Found" /><NotFoundPage /></>} />
               </Routes>
             </React.Suspense>

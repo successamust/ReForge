@@ -5,8 +5,9 @@ import * as leaderboardService from '../services/leaderboard.service.js';
  */
 export async function getLeaderboard(req, res, next) {
     try {
-        const limit = parseInt(req.query.limit) || 20;
-        const leaderboard = await leaderboardService.getGlobalLeaderboard(limit);
+        const limit = parseInt(req.query.limit) || 100;
+        const language = req.query.language || null;
+        const leaderboard = await leaderboardService.getGlobalLeaderboard(limit, language);
 
         res.json({
             success: true,

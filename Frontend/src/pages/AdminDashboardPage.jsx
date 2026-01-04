@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { adminService } from '../services/admin.service';
 import Button from '../components/ui/Button';
+import { GrowthChart, LanguagePopularityChart, SubmissionTrendsChart } from '../components/admin/AdminCharts';
 
 const StatCard = ({ title, value, subtext }) => (
     <div className="bg-white/5 border border-white/10 p-6">
@@ -90,10 +91,23 @@ const AdminDashboardPage = () => {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="bg-white/5 border border-white/10 p-8">
+                {/* Charts Selection */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+                    <div className="lg:col-span-2">
+                        <GrowthChart data={stats?.growth} />
+                    </div>
+                    <div>
+                        <LanguagePopularityChart data={stats?.popularity} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+                    <div className="lg:col-span-1">
+                        <SubmissionTrendsChart data={stats?.trends} />
+                    </div>
+                    <div className="lg:col-span-2 bg-white/5 border border-white/10 p-8">
                         <h3 className="text-xl font-bold text-white mb-6">System Health</h3>
-                        <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                             <div className="flex justify-between border-b border-white/10 pb-4">
                                 <span className="text-white/60">Node Version</span>
                                 <span className="text-white font-mono">{stats?.system?.nodeVersion}</span>
@@ -106,17 +120,23 @@ const AdminDashboardPage = () => {
                                 <span className="text-white/60">Last Updated</span>
                                 <span className="text-white font-mono">{new Date().toLocaleTimeString()}</span>
                             </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white/5 border border-white/10 p-8 flex items-center justify-center">
-                        <div className="text-center">
-                            <p className="text-white/40 mb-4">Quick Actions</p>
-                            <div className="flex gap-4">
-                                <Button to="/admin/users">Manage Users</Button>
-                                <Button variant="ghost" to="/admin/logs">View Logs</Button>
+                            <div className="flex justify-between border-b border-white/10 pb-4">
+                                <span className="text-white/60">Memory (RSS)</span>
+                                <span className="text-white font-mono">{Math.round(stats?.system?.memoryUsage?.rss / 1024 / 1024)} MB</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div className="bg-white/5 border border-white/10 p-8 flex items-center justify-between mb-24">
+                    <div>
+                        <h3 className="text-xl font-bold text-white mb-2">Administrative Console</h3>
+                        <p className="text-white/40 text-sm">Execute system-wide protocols and manage user integrity.</p>
+                    </div>
+                    <div className="flex gap-4">
+                        <Button to="/admin/users">Manage Users</Button>
+                        <Button variant="ghost" to="/admin/logs">View Logs</Button>
+                        <Button variant="ghost" to="/status">System Health</Button>
                     </div>
                 </div>
             </div>

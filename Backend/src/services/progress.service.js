@@ -11,9 +11,6 @@ import { Lesson } from '../models/index.js';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
 
-/**
- * Get user's progress for a specific language
- */
 export async function getProgress(userId, language) {
     const user = await User.findById(userId);
     if (!user) {
@@ -24,9 +21,26 @@ export async function getProgress(userId, language) {
     const progressExists = user.progress.some(p => p.language === language);
     const progress = user.getProgress(language);
 
-    // If progress was just initialized (not in DB), save it
+    // If progress was just initialized (not in DB), save it ONLY if we want to start it
+    // This function can be called by advanceProgress or by direct lesson access
     if (!progressExists) {
         await user.save();
+
+        // Log the start of a new track
+        await AuditLog.log({
+            userId,
+            action: 'PROGRESS_START',
+            payload: { language },
+        });
+
+        // Check for achievements (e.g., Polyglot)
+        import('./achievement.service.js').then(service => {
+            service.checkAchievements(userId, {
+                language,
+                day: 1,
+                event: 'enrollment'
+            });
+        }).catch(err => logger.error('Achievement check failed on enrollment', err));
     }
 
     // Calculate remaining window time if failing
@@ -53,30 +67,62 @@ export async function getProgress(userId, language) {
     };
 }
 
-/**
- * Get all progress for a user
- */
 export async function getAllProgress(userId) {
     const user = await User.findById(userId);
     if (!user) {
         throw new NotFoundError('User');
     }
 
-    // Get progress for all supported languages
-    const progressList = [];
-    for (const language of config.supportedLanguages) {
-        const progress = await getProgress(userId, language);
-        progressList.push(progress);
-    }
+    // Get progress only for languages where the user has actually started
+    // We filter the config.supportedLanguages against user.progress
+    const progressList = config.supportedLanguages.map(language => {
+        const existingProgress = user.progress.find(p => p.language === language);
+
+        if (!existingProgress) {
+            return {
+                language,
+                currentDay: 0, // 0 indicates not started
+                lastPassedDay: 0,
+                failedDay: null,
+                failedAt: null,
+                attemptCount: 0,
+                completedAt: null,
+                remainingWindow: null,
+                isCompleted: false,
+                notStarted: true
+            };
+        }
+
+        const progress = user.getProgress(language);
+
+        // Calculate remaining window time if failing
+        let remainingWindow = null;
+        if (progress.failedAt) {
+            const remainingMs = getRemainingWindowTime(progress.failedAt, user.timezone);
+            remainingWindow = {
+                milliseconds: remainingMs,
+                formatted: formatRemainingTime(remainingMs),
+                expired: remainingMs === 0,
+            };
+        }
+
+        return {
+            language: progress.language,
+            currentDay: progress.currentDay,
+            lastPassedDay: progress.lastPassedDay,
+            failedDay: progress.failedDay,
+            failedAt: progress.failedAt,
+            attemptCount: progress.attemptCount,
+            completedAt: progress.completedAt,
+            remainingWindow,
+            isCompleted: progress.currentDay > config.maxDays || progress.completedAt !== null,
+        };
+    });
 
     return progressList;
 }
 
-/**
- * Record a successful day completion
- * Uses atomic update to prevent race conditions
- */
-export async function advanceProgress(userId, language, day) {
+export async function advanceProgress(userId, language, day, submissionData = {}) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -162,21 +208,25 @@ export async function advanceProgress(userId, language, day) {
         });
 
         // Update user stats (streaks and points)
-        await updateUserStats(user, language, day, session);
+        await updateUserStats(user, language, day, session, submissionData);
 
         // Check for achievements
-        import('./achievement.service.js').then(service => {
-            service.checkAchievements(userId, { language, completed: day >= config.maxDays });
-        }).catch(err => logger.error('Achievement check failed', err));
+        const achievementService = await import('./achievement.service.js');
+        const newAchievements = await achievementService.checkAchievements(userId, {
+            language,
+            completed: day >= config.maxDays,
+            day,
+            completionTimeMinutes: submissionData.completionTimeMinutes,
+            isFirstTry: submissionData.isFirstTry,
+        });
 
         await session.commitTransaction();
 
-        logger.info(`User ${userId} advanced from day ${day} to ${day + 1} in ${language}`);
-
         return {
-            previousDay: day,
-            currentDay: day < config.maxDays ? day + 1 : day,
-            completed: day >= config.maxDays,
+            success: true,
+            dayAdvanced: day < config.maxDays ? day + 1 : day,
+            courseCompleted: day >= config.maxDays,
+            newAchievements,
         };
     } catch (error) {
         await session.abortTransaction();
@@ -186,10 +236,6 @@ export async function advanceProgress(userId, language, day) {
     }
 }
 
-/**
- * Record a failed attempt
- * Only sets failedAt on first failure of the day
- */
 export async function recordFailure(userId, language, day) {
     const user = await User.findById(userId);
     if (!user) {
@@ -248,10 +294,6 @@ export async function recordFailure(userId, language, day) {
     };
 }
 
-/**
- * Apply rollback punishment
- * Called by scheduler when window expires
- */
 export async function applyRollback(userId, language, isSystem = true) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -337,9 +379,6 @@ export async function applyRollback(userId, language, isSystem = true) {
     }
 }
 
-/**
- * Admin: Override user progress
- */
 export async function adminOverrideProgress(
     userId,
     language,
@@ -433,9 +472,6 @@ export async function adminOverrideProgress(
     }
 }
 
-/**
- * Check if user can attempt a specific day
- */
 export async function canAttemptDay(userId, language, day) {
     const user = await User.findById(userId);
     if (!user) {
@@ -469,10 +505,7 @@ export async function canAttemptDay(userId, language, day) {
     };
 }
 
-/**
- * Internal: Update user stats for streaks and points
- */
-async function updateUserStats(user, language, day, session) {
+async function updateUserStats(user, language, day, session, submissionData = {}) {
     const todayStr = getCurrentCalendarDate(user.timezone);
     const yesterdayDate = new Date();
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
@@ -482,13 +515,42 @@ async function updateUserStats(user, language, day, session) {
         ? getCurrentCalendarDate(user.timezone, user.stats.lastActivityAt)
         : null;
 
-    // Points calculation: Base 10 + (Difficulty * 5)
-    // We fetch the lesson to get its difficulty
-    const lesson = await Lesson.findOne({ language, day }).session(session);
-    const pointsToAdd = 10 + (lesson ? lesson.difficulty * 5 : 0);
+    // Calculate base points
+    let points = 100;
+
+    // Speed Bonus: +50 if completed under 30 minutes
+    if (submissionData.completionTimeMinutes && submissionData.completionTimeMinutes < 30) {
+        points += 50;
+    }
+
+    // First Try Bonus: +25 if no previous failed attempts for this day
+    if (submissionData.isFirstTry) {
+        points += 25;
+    }
+
+    // Calculate current streak for multiplier
+    let currentStreak = user.stats.currentStreak || 0;
+    if (lastActivityStr === yesterdayStr) {
+        currentStreak += 1;
+    } else if (lastActivityStr !== todayStr) {
+        currentStreak = 1;
+    }
+
+    // Apply Streak Multiplier
+    let streakMultiplier = 1.0;
+    if (currentStreak >= 30) {
+        streakMultiplier = 1.5;
+    } else if (currentStreak >= 14) {
+        streakMultiplier = 1.2;
+    } else if (currentStreak >= 7) {
+        streakMultiplier = 1.1;
+    }
+
+    // Apply multiplier and round
+    const finalPoints = Math.round(points * streakMultiplier);
 
     const updateStats = {
-        $inc: { 'stats.totalPoints': pointsToAdd },
+        $inc: { 'stats.totalPoints': finalPoints },
         $set: { 'stats.lastActivityAt': new Date() }
     };
 
@@ -502,9 +564,6 @@ async function updateUserStats(user, language, day, session) {
         updateStats.$set['stats.currentStreak'] = 1;
     }
 
-    // We can't easily check current vs max in one update without aggregation or fetching first
-    // But since we have the user object in advanceProgress, we can do it there.
-
     // Update user object directly for subsequent checks in the same session
     if (lastActivityStr === yesterdayStr) {
         user.stats.currentStreak += 1;
@@ -517,11 +576,10 @@ async function updateUserStats(user, language, day, session) {
     }
 
     await User.updateOne({ _id: user._id }, updateStats, { session });
+
+    logger.info(`User ${user._id} earned ${finalPoints} points (base: ${points}, multiplier: ${streakMultiplier}x)`);
 }
 
-/**
- * Get aggregated user stats (Accuracy, Total Submissions)
- */
 export async function getUserStats(userId) {
     const user = await User.findById(userId);
     if (!user) {

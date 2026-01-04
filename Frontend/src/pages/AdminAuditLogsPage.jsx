@@ -3,12 +3,16 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { adminService } from '../services/admin.service';
 import Button from '../components/ui/Button';
+import { AnimatePresence } from 'framer-motion';
+import { Eye, X } from 'lucide-react';
 
 const AdminAuditLogsPage = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({});
+    const [peekCode, setPeekCode] = useState(null);
+    const [loadingCode, setLoadingCode] = useState(false);
 
     const loadLogs = React.useCallback(async () => {
         try {
@@ -23,6 +27,18 @@ const AdminAuditLogsPage = () => {
             setLoading(false);
         }
     }, [page]);
+
+    const handlePeek = async (submissionId) => {
+        try {
+            setLoadingCode(true);
+            const response = await adminService.getSubmissionCode(submissionId);
+            setPeekCode(response.data?.submission || response.submission);
+        } catch (err) {
+            console.error('Failed to load code', err);
+        } finally {
+            setLoadingCode(false);
+        }
+    };
 
     useEffect(() => {
         loadLogs();
@@ -79,13 +95,63 @@ const AdminAuditLogsPage = () => {
                                 <div className="col-span-3 text-white/40 truncate pr-4">
                                     {log.payload ? JSON.stringify(log.payload) : 'N/A'}
                                 </div>
-                                <div className="col-span-3 text-white/40 font-mono">
+                                <div className="col-span-2 text-white/40 font-mono">
                                     {log.ipAddress || '-'}
+                                </div>
+                                <div className="col-span-1 flex justify-end">
+                                    {log.payload?.submissionId && (
+                                        <button
+                                            onClick={() => handlePeek(log.payload.submissionId)}
+                                            className="p-2 border border-white/10 hover:border-white/40 hover:bg-white/5 transition-colors text-white/40 hover:text-white"
+                                            title="Peek Code"
+                                        >
+                                            <Eye size={14} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
+
+                <AnimatePresence>
+                    {peekCode && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-zinc-900 border border-white/10 w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl"
+                            >
+                                <div className="p-6 border-b border-white/5 flex justify-between items-center">
+                                    <div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">
+                                            Submission Peek
+                                        </span>
+                                        <h3 className="text-white font-bold flex items-center gap-2">
+                                            {peekCode.language.toUpperCase()} / DAY {peekCode.day}
+                                            <span className={`text-[10px] px-2 py-0.5 border ${peekCode.status === 'completed' ? 'border-green-500/50 text-green-400' : 'border-red-500/50 text-red-400'
+                                                }`}>
+                                                {peekCode.status.toUpperCase()}
+                                            </span>
+                                        </h3>
+                                    </div>
+                                    <button onClick={() => setPeekCode(null)} className="p-2 hover:bg-white/5 text-white/40 hover:text-white">
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-auto p-6 font-mono text-sm">
+                                    <pre className="text-white/80 whitespace-pre-wrap leading-relaxed">
+                                        {peekCode.code}
+                                    </pre>
+                                </div>
+                                <div className="p-4 bg-black/40 border-t border-white/5 flex justify-end">
+                                    <Button size="sm" onClick={() => setPeekCode(null)}>Close Inspection</Button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
 
                 {/* Pagination */}
                 <div className="flex justify-between items-center mt-6">

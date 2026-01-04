@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import { NeuralCore, PrecisionTarget, EnergyZap, CodeFile, VerifiedCheck } from '../components/icons/CustomIcons';
 import { progressService } from '../services/progress.service';
 import { AppContext } from '../context/AppContext';
+import AchievementBadge from '../components/AchievementBadge';
 
 const languages = [
     { id: 'javascript', name: 'JavaScript' },
@@ -86,31 +87,48 @@ const LanguageProgressCard = ({ lang, prog, i }) => {
                     {lang.name}
                 </h3>
 
-                <div className="space-y-4 mb-6">
+                <div className="space-y-4 mb-8">
                     <div className="flex justify-between text-sm">
                         <span className="text-white/60 font-light">Progress</span>
-                        <span className="text-white font-black">{percentage}%</span>
+                        <span className={`text-white font-black ${!isActive && 'opacity-20'}`}>{percentage}%</span>
                     </div>
                     <div className="w-full h-px bg-white/5 overflow-hidden">
                         <motion.div
                             className="h-full bg-white"
                             initial={{ width: 0 }}
-                            whileInView={{ width: `${percentage}%` }}
-                            viewport={{ once: true }}
+                            animate={{ width: `${percentage}%` }}
                             transition={{ duration: 1, delay: i * 0.1 }}
                         />
                     </div>
-                    <div className="flex justify-between text-xs text-white/40 font-bold uppercase tracking-widest">
-                        <span>Day {currentDay || 0} / 30</span>
-                        <span>{prog?.lastPassedDay || 0} Completed</span>
-                    </div>
+                    {isActive ? (
+                        <div className="flex justify-between text-xs text-white/40 font-bold uppercase tracking-widest">
+                            <span>Day {currentDay} / 30</span>
+                            <span>{prog?.lastPassedDay || 0} Completed</span>
+                        </div>
+                    ) : (
+                        <div className="text-xs text-white/20 font-bold uppercase tracking-widest text-center">
+                            30 Days of Intense Reforging
+                        </div>
+                    )}
                 </div>
 
-                {isActive && (
+                {!isActive ? (
+                    <Button
+                        variant="outline"
+                        size="md"
+                        className="w-full border-white/10 hover:border-white/40 hover:bg-white/5 group-hover:scale-[1.02] transition-all"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            navigate(`/lessons/${lang.id}/1`);
+                        }}
+                    >
+                        Start {lang.name} Track
+                    </Button>
+                ) : (
                     <Button
                         variant="ghost"
-                        size="sm"
-                        className="w-full"
+                        size="md"
+                        className="w-full border border-white/5 bg-white/5 hover:bg-white/10"
                         onClick={(e) => {
                             e.preventDefault();
                             navigate(`/lessons/${lang.id}/${currentDay}`);
@@ -127,6 +145,8 @@ const LanguageProgressCard = ({ lang, prog, i }) => {
 const UserDashboardPage = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated } = useContext(AppContext);
+
+    const [achievements, setAchievements] = useState([]);
     const [progress, setProgress] = useState([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
@@ -147,17 +167,23 @@ const UserDashboardPage = () => {
     const loadProgress = async () => {
         try {
             setLoading(true);
-            const [progressResponse, statsResponse] = await Promise.all([
+            const [progressResponse, statsResponse, achievementsResponse] = await Promise.all([
                 progressService.getAllProgress(),
-                progressService.getStats().catch(() => ({ data: { stats: {} } }))
+                progressService.getStats().catch(() => ({ data: { stats: {} } })),
+                progressService.getAchievements().catch(() => ({ data: { data: [] } }))
             ]);
 
             // API interceptor returns response.data, so response is already { success, data }
-            const progressData = progressResponse?.data || progressResponse || [];
+            // Backend returns { success: true, data: { progress } }
+            const progressData = progressResponse?.data?.progress || progressResponse?.progress || [];
             const progressArray = Array.isArray(progressData) ? progressData : [];
+            // Backend returns { success: true, data: { stats } }
             const statsData = statsResponse?.data?.stats || {};
+            // Backend returns { success: true, data: { achievements: [...] } }
+            const achievementsData = achievementsResponse?.data?.achievements || [];
 
             setProgress(progressArray);
+            setAchievements(Array.isArray(achievementsData) ? achievementsData : []);
 
             // Calculate stats using the array version
             const totalDays = progressArray.reduce((sum, p) => sum + (p.currentDay || 0), 0);
@@ -175,6 +201,7 @@ const UserDashboardPage = () => {
         } catch (error) {
             console.error('Failed to load progress:', error);
             setProgress([]);
+            setAchievements([]);
             setStats({
                 totalDays: 0,
                 completedDays: 0,
@@ -198,6 +225,68 @@ const UserDashboardPage = () => {
     // Always call useTransform hooks unconditionally
     const headerY = useTransform(scrollYProgress, [0, 1], [50, -50]);
     const headerOpacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+
+    const ACHIEVEMENT_GROUPS = [
+        {
+            title: "General & Performance",
+            items: [
+                { type: 'FIRST_BLOOD', label: 'First Blood', description: 'Complete your first lesson', icon: '⚔️' },
+                { type: 'SPEED_DEMON', label: 'Speed Demon', description: 'Complete a lesson in < 5 mins', icon: '⚡' },
+                { type: 'SHARPSHOOTER', label: 'Sharpshooter', description: 'Complete a lesson on first try', icon: '🎯' },
+                { type: 'POLYGLOT', label: 'Polyglot', description: 'Start 3 different languages', icon: '🌐' },
+                { type: 'STREAK_7', label: 'Week Warrior', description: 'Maintain a 7-day streak', icon: '🔥' },
+                { type: 'STREAK_30', label: 'Monthly Master', description: 'Maintain a 30-day streak', icon: '📅' },
+                { type: 'POINTS_100', label: 'Centurion', description: 'Earn 100 total points', icon: '💯' },
+                { type: 'POINTS_1000', label: 'Kilo-Crusher', description: 'Earn 1,000 total points', icon: '🚀' },
+                { type: 'ALL_COMPLETE', label: 'The Reforged', description: 'Master ALL 5 languages (Day 30)', icon: '👑' },
+            ]
+        },
+        {
+            title: "JavaScript Mastery",
+            items: [
+                { type: 'JAVASCRIPT_INITIATE', label: 'JS Initiate', description: 'Complete JavaScript Day 1', icon: '🟨' },
+                { type: 'JAVASCRIPT_7', label: 'JS Scholar', description: 'Complete JavaScript Day 7', icon: '📜' },
+                { type: 'JAVASCRIPT_15', label: 'JS Expert', description: 'Complete JavaScript Day 15', icon: '🧠' },
+                { type: 'JAVASCRIPT_30', label: 'JS Master', description: 'Complete JavaScript Day 30', icon: '⚔️' },
+            ]
+        },
+        {
+            title: "Python Mastery",
+            items: [
+                { type: 'PYTHON_INITIATE', label: 'Python Initiate', description: 'Complete Python Day 1', icon: '🐍' },
+                { type: 'PYTHON_7', label: 'Python Scholar', description: 'Complete Python Day 7', icon: '📜' },
+                { type: 'PYTHON_15', label: 'Python Expert', description: 'Complete Python Day 15', icon: '🧠' },
+                { type: 'PYTHON_30', label: 'Python Master', description: 'Complete Python Day 30', icon: '⚔️' },
+            ]
+        },
+        {
+            title: "Java Mastery",
+            items: [
+                { type: 'JAVA_INITIATE', label: 'Java Initiate', description: 'Complete Java Day 1', icon: '☕' },
+                { type: 'JAVA_7', label: 'Java Scholar', description: 'Complete Java Day 7', icon: '📜' },
+                { type: 'JAVA_15', label: 'Java Expert', description: 'Complete Java Day 15', icon: '🧠' },
+                { type: 'JAVA_30', label: 'Java Master', description: 'Complete Java Day 30', icon: '⚔️' },
+            ]
+        },
+        {
+            title: "Go Mastery",
+            items: [
+                { type: 'GO_INITIATE', label: 'Go Initiate', description: 'Complete Go Day 1', icon: '🐹' },
+                { type: 'GO_7', label: 'Go Scholar', description: 'Complete Go Day 7', icon: '📜' },
+                { type: 'GO_15', label: 'Go Expert', description: 'Complete Go Day 15', icon: '🧠' },
+                { type: 'GO_30', label: 'Go Master', description: 'Complete Go Day 30', icon: '⚔️' },
+            ]
+        },
+        {
+            title: "C# Mastery",
+            items: [
+                { type: 'CSHARP_INITIATE', label: 'C# Initiate', description: 'Complete C# Day 1', icon: '#️⃣' },
+                { type: 'CSHARP_7', label: 'C# Scholar', description: 'Complete C# Day 7', icon: '📜' },
+                { type: 'CSHARP_15', label: 'C# Expert', description: 'Complete C# Day 15', icon: '🧠' },
+                { type: 'CSHARP_30', label: 'C# Master', description: 'Complete C# Day 30', icon: '⚔️' },
+            ]
+        }
+    ];
 
     return (
         <div ref={ref} className="relative min-h-screen bg-black py-40 px-6">
@@ -259,27 +348,30 @@ const UserDashboardPage = () => {
                         <h2 className="text-2xl font-black text-white mb-8 border-b border-white/10 pb-4">
                             Achievements
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="bg-black p-6 border border-white/10 opacity-50">
-                                <div className="mb-4 text-white/40">🔒</div>
-                                <h4 className="text-white font-bold text-sm mb-1">First Steps</h4>
-                                <p className="text-white/40 text-xs">Complete your first lesson</p>
-                            </div>
-                            <div className="bg-black p-6 border border-white/10 opacity-50">
-                                <div className="mb-4 text-white/40">🔒</div>
-                                <h4 className="text-white font-bold text-sm mb-1">Week Streak</h4>
-                                <p className="text-white/40 text-xs">Maintain a 7-day streak</p>
-                            </div>
-                            <div className="bg-black p-6 border border-white/10 opacity-50">
-                                <div className="mb-4 text-white/40">🔒</div>
-                                <h4 className="text-white font-bold text-sm mb-1">Polyglot</h4>
-                                <p className="text-white/40 text-xs">Start 3 different languages</p>
-                            </div>
-                            <div className="bg-black p-6 border border-white/10 opacity-50">
-                                <div className="mb-4 text-white/40">🔒</div>
-                                <h4 className="text-white font-bold text-sm mb-1">Mastery</h4>
-                                <p className="text-white/40 text-xs">Complete a 30-day challenge</p>
-                            </div>
+                        <div className="space-y-12">
+                            {ACHIEVEMENT_GROUPS.map((group, groupIndex) => (
+                                <div key={groupIndex}>
+                                    <h3 className="text-white/60 font-bold uppercase tracking-widest text-sm mb-6 flex items-center gap-3">
+                                        <div className="w-1 h-1 bg-white rounded-full"></div>
+                                        {group.title}
+                                    </h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                        {group.items.map((type) => {
+                                            const isUnlocked = achievements.some(a => a.type === type.type);
+                                            return (
+                                                <div key={type.type} className="flex justify-center">
+                                                    <AchievementBadge
+                                                        type={type.type}
+                                                        size="lg"
+                                                        locked={!isUnlocked}
+                                                        showLabel={true}
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
@@ -317,4 +409,3 @@ const UserDashboardPage = () => {
 };
 
 export default UserDashboardPage;
-

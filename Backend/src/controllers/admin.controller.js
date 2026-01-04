@@ -376,6 +376,51 @@ export async function getSystemStats(req, res, next) {
 
         const lessonCount = await Lesson.countDocuments();
 
+        // User Growth (Last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const growthData = await User.aggregate([
+            { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Language Popularity (Active enrollments)
+        const languagePopularity = await User.aggregate([
+            { $unwind: "$progress" },
+            { $match: { "progress.currentDay": { $gt: 0 } } },
+            {
+                $group: {
+                    _id: "$progress.language",
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Submission Trends (Success vs Failure, Last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const submissionTrends = await Submission.aggregate([
+            { $match: { createdAt: { $gte: sevenDaysAgo } } },
+            {
+                $group: {
+                    _id: {
+                        date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                        status: "$status"
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id.date": 1 } }
+        ]);
+
         res.json({
             success: true,
             data: {
@@ -392,6 +437,9 @@ export async function getSystemStats(req, res, next) {
                 content: {
                     totalLessons: lessonCount,
                 },
+                growth: growthData,
+                popularity: languagePopularity,
+                trends: submissionTrends,
                 system: {
                     nodeVersion: process.version,
                     memoryUsage: process.memoryUsage(),
@@ -465,6 +513,68 @@ export async function updateUserTier(req, res, next) {
         res.json({
             success: true,
             data: { user }
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * Get difficulty heatmap data (success rates per lesson)
+ */
+export async function getDifficultyHeatmap(req, res, next) {
+    try {
+        const heatmap = await Submission.aggregate([
+            {
+                $group: {
+                    _id: { language: "$language", day: "$day" },
+                    total: { $sum: 1 },
+                    success: {
+                        $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }
+                    }
+                }
+            },
+            {
+                $project: {
+                    language: "$_id.language",
+                    day: "$_id.day",
+                    rate: {
+                        $cond: [
+                            { $gt: ["$total", 0] },
+                            { $multiply: [{ $divide: ["$success", "$total"] }, 100] },
+                            0
+                        ]
+                    },
+                    total: 1
+                }
+            },
+            { $sort: { day: 1 } }
+        ]);
+
+        res.json({
+            success: true,
+            data: { heatmap },
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * Admin: Get code for a specific submission
+ */
+export async function getSubmissionCode(req, res, next) {
+    try {
+        const { id } = req.params;
+        const submission = await Submission.findById(id).select('code language day status');
+
+        if (!submission) {
+            throw new NotFoundError('Submission');
+        }
+
+        res.json({
+            success: true,
+            data: { submission },
         });
     } catch (error) {
         next(error);

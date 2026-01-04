@@ -38,5 +38,9 @@ export const adminService = {
 
     async deleteLesson(language, day) {
         return api.delete(`/admin/lessons/${language}/${day}`);
+    },
+
+    async getSubmissionCode(id) {
+        return api.get(`/admin/submissions/${id}/code`);
     }
 };

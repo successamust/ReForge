@@ -26,6 +26,7 @@ const config = {
     env: process.env.NODE_ENV || 'development',
     port: parseInt(process.env.PORT, 10) || 3000,
     apiUrl: process.env.API_URL || 'http://localhost:3000',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
 
     mongodb: {
         uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/coding-challenge',

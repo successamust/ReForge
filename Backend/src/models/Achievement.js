@@ -17,6 +17,20 @@ const achievementSchema = new mongoose.Schema({
             'ALL_COMPLETE',
             'POINTS_100',
             'POINTS_1000',
+            'FIRST_BLOOD',
+            'SPEED_DEMON',
+            'SHARPSHOOTER',
+            'POLYGLOT',
+            // Javascript
+            'JAVASCRIPT_INITIATE', 'JAVASCRIPT_7', 'JAVASCRIPT_15', 'JAVASCRIPT_30',
+            // Python
+            'PYTHON_INITIATE', 'PYTHON_7', 'PYTHON_15', 'PYTHON_30',
+            // Java
+            'JAVA_INITIATE', 'JAVA_7', 'JAVA_15', 'JAVA_30',
+            // Go
+            'GO_INITIATE', 'GO_7', 'GO_15', 'GO_30',
+            // C#
+            'CSHARP_INITIATE', 'CSHARP_7', 'CSHARP_15', 'CSHARP_30',
         ],
     },
     metadata: {

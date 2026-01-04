@@ -1,16 +1,22 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { CodeFile, AwardMedal, CodeTerminal, CodeShield } from './icons/CustomIcons';
+import {
+    CodeFile,
+    AwardMedal,
+    CodeTerminal,
+    CodeShield,
+    ChevronDown,
+    NeuralCore,
+    TrendingUp
+} from './icons/CustomIcons';
 import { AppContext } from '../context/AppContext';
 import Button from './ui/Button';
+import MissionTimer from './ui/MissionTimer';
 
-// Constants outside component
 const TARGET_TEXT = "Forge";
 const FORGE_LETTERS = TARGET_TEXT.split('');
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
-
-// Alphabet Cycling Decoding Animation
 const AnimatedLogo = () => {
     // Add state to track hover
     const [isHovered, setIsHovered] = useState(false);
@@ -83,13 +89,10 @@ const AnimatedLogo = () => {
             <span className="relative inline-flex">
                 {FORGE_LETTERS.map((letter, i) => {
                     const displayChar = getDisplayChar(letter, i);
-                    const targetIndex = targetIndices[i];
-                    const isDecoding = isHovered && currentIndex < targetIndex;
-                    const hasReachedTarget = isHovered && currentIndex >= targetIndex;
 
                     return (
                         <motion.span
-                            key={`${i}-${currentIndex}`}
+                            key={i}
                             className="inline-block font-black tracking-tighter text-xl font-mono"
                             animate={{
                                 color: '#ffffff',
@@ -123,10 +126,10 @@ const AnimatedLogo = () => {
 };
 
 const Navbar = () => {
-    // navigate unused
     const { isAuthenticated, user, logout } = useContext(AppContext);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isProtocolOpen, setIsProtocolOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -138,7 +141,7 @@ const Navbar = () => {
         { name: 'Lessons', href: '/lessons', icon: CodeFile },
         { name: 'Leaderboard', href: '/leaderboard', icon: AwardMedal },
         { name: 'Practice', href: '/practice', icon: CodeTerminal },
-        { name: 'Dashboard', href: '/dashboard', icon: CodeTerminal, auth: true },
+        { name: 'Dashboard', href: '/dashboard', icon: TrendingUp, auth: true },
         { name: 'Admin', href: '/admin', icon: CodeShield, auth: true, adminOnly: true },
     ];
 
@@ -158,22 +161,58 @@ const Navbar = () => {
                 </Link>
 
                 {/* Desktop Nav */}
-                <div className="hidden md:flex items-center gap-8">
-                    <div className="flex items-center gap-6 mr-6 border-r border-white/10 pr-6">
-                        {navLinks
-                            .filter(link => !link.auth || isAuthenticated)
-                            .filter(link => !link.adminOnly || user?.role === 'admin')
-                            .map((link) => (
-                                <Link
-                                    key={link.name}
-                                    to={link.href}
-                                    className="text-white/40 hover:text-white text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2"
-                                >
-                                    <link.icon size={16} />
-                                    {link.name}
-                                </Link>
-                            ))}
+                <div className="hidden md:flex items-center gap-6">
+                    {isAuthenticated && (
+                        <div className="mr-4">
+                            <MissionTimer mini={true} />
+                        </div>
+                    )}
+
+                    <div className="relative">
+                        <motion.button
+                            onClick={() => setIsProtocolOpen(!isProtocolOpen)}
+                            className={`flex items-center gap-2 px-4 py-2 border transition-all text-xs font-black uppercase tracking-widest ${isProtocolOpen ? 'bg-white text-black border-white' : 'text-white/40 border-white/10 hover:border-white/40 hover:text-white'
+                                }`}
+                        >
+                            <NeuralCore size={14} />
+                            Protocol
+                            <ChevronDown size={12} className={`transition-transform duration-300 ${isProtocolOpen ? 'rotate-180' : ''}`} />
+                        </motion.button>
+
+                        <AnimatePresence>
+                            {isProtocolOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-[-1]" onClick={() => setIsProtocolOpen(false)} />
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute top-full left-0 mt-4 w-56 bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden"
+                                    >
+                                        <div className="p-2 flex flex-col">
+                                            {navLinks
+                                                .filter(link => !link.auth || isAuthenticated)
+                                                .filter(link => !link.adminOnly || user?.role === 'admin')
+                                                .map((link) => (
+                                                    <Link
+                                                        key={link.name}
+                                                        to={link.href}
+                                                        onClick={() => setIsProtocolOpen(false)}
+                                                        className="flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all"
+                                                    >
+                                                        <link.icon size={14} className="text-white/60" />
+                                                        {link.name}
+                                                    </Link>
+                                                ))}
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
                     </div>
+
+                    <div className="w-px h-4 bg-white/10 mx-2" />
+
                     <div className="flex items-center gap-3">
                         {isAuthenticated ? (
                             <>
