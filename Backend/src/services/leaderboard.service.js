@@ -20,7 +20,7 @@ export async function getGlobalLeaderboard(limit = 100, language = null, offset 
         // Fetch user details from MongoDB
         const userIds = topUsers.map(u => u.userId);
         const users = await User.find({ _id: { $in: userIds } })
-            .select('email firstName lastName progress')
+            .select('email firstName lastName progress stats')
             .lean();
 
         // Create a map for quick lookup
@@ -49,8 +49,6 @@ export async function getGlobalLeaderboard(limit = 100, language = null, offset 
                 },
                 language: language || langProgress.language,
                 lastPassedDay: langProgress.lastPassedDay,
-                currentDay: langProgress.currentDay,
-                currentDay: langProgress.currentDay,
                 currentDay: langProgress.currentDay,
                 // If filtering by language, show that language's points. If global, show total points.
                 score: language ? (langProgress.points || 0) : (user.stats?.totalPoints || 0),

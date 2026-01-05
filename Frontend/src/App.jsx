@@ -35,6 +35,7 @@ const PracticePage = React.lazy(() => import('./pages/PracticePage'));
 const StatusPage = React.lazy(() => import('./pages/StatusPage'));
 const DocsPage = React.lazy(() => import('./pages/DocsPage'));
 const SecurityPage = React.lazy(() => import('./pages/SecurityPage'));
+const ArenaPage = React.lazy(() => import('./pages/ArenaPage'));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 
 const Logout = () => {
@@ -157,6 +158,15 @@ function App() {
                   element={
                     <ProtectedRoute requireAdmin={true}>
                       <StatusPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/arena"
+                  element={
+                    <ProtectedRoute>
+                      <SEO title="Sudden Death | Arena" />
+                      <ArenaPage />
                     </ProtectedRoute>
                   }
                 />

@@ -6,6 +6,8 @@ import * as progressService from './progress.service.js';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
 
+import { telemetryVerifier } from './telemetry.verifier.js';
+
 let submissionQueue = null;
 
 export function getSubmissionQueue() {
@@ -26,7 +28,7 @@ export function getSubmissionQueue() {
     return submissionQueue;
 }
 
-export async function createSubmission(userId, language, day, code) {
+export async function createSubmission(userId, language, day, code, telemetry = null) {
     const user = await User.findById(userId);
     if (!user) {
         throw new NotFoundError('User');
@@ -51,6 +53,25 @@ export async function createSubmission(userId, language, day, code) {
     });
 
     await submission.save();
+
+    // Run Telemetry Verification
+    if (telemetry) {
+        try {
+            const verificationResult = await telemetryVerifier.analyzeAndSave(
+                telemetry,
+                submission._id,
+                userId
+            );
+
+            submission.verification = {
+                verified: verificationResult.verified,
+                warning: verificationResult.flags.join(',') || null
+            };
+            await submission.save();
+        } catch (err) {
+            logger.error('Verification failed', err);
+        }
+    }
 
     const queue = getSubmissionQueue();
     const job = await queue.add('grade', {

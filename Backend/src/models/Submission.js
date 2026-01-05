@@ -116,6 +116,10 @@ const submissionSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
+    verification: {
+        verified: { type: Boolean, default: true },
+        warning: { type: String, default: null }
+    },
 }, {
     timestamps: true,
 });

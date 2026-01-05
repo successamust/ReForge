@@ -2,10 +2,12 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
-import { NeuralCore, PrecisionTarget, EnergyZap, CodeFile, VerifiedCheck } from '../components/icons/CustomIcons';
+import { NeuralCore, PrecisionTarget, EnergyZap, CodeFile, VerifiedCheck, AchievementTrophy } from '../components/icons/CustomIcons';
 import { progressService } from '../services/progress.service';
 import { AppContext } from '../context/AppContext';
 import AchievementBadge from '../components/AchievementBadge';
+import RelapseOverlay from '../components/ui/RelapseOverlay';
+import DetoxModal from '../components/ui/DetoxModal';
 
 const languages = [
     { id: 'javascript', name: 'JavaScript' },
@@ -103,7 +105,10 @@ const LanguageProgressCard = ({ lang, prog, i }) => {
                     {isActive ? (
                         <div className="flex justify-between text-xs text-white/40 font-bold uppercase tracking-widest">
                             <span>Day {currentDay} / 30</span>
-                            <span>{prog?.lastPassedDay || 0} Completed</span>
+                            <div className="flex items-center gap-2">
+                                <AchievementTrophy size={10} className="text-white/40" />
+                                <span>{prog?.points || 0} PTS</span>
+                            </div>
                         </div>
                     ) : (
                         <div className="text-xs text-white/20 font-bold uppercase tracking-widest text-center">
@@ -155,6 +160,10 @@ const UserDashboardPage = () => {
         currentStreak: 0,
         languagesActive: 0
     });
+    const [isDetoxOpen, setIsDetoxOpen] = useState(false);
+
+    // Check for relapse state
+    const isRelapsed = user?.status === 'relapsed';
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -196,7 +205,8 @@ const UserDashboardPage = () => {
                 currentStreak: statsData.streak || 0,
                 languagesActive,
                 accuracy: statsData.accuracy || 0,
-                totalSubmissions: statsData.totalSubmissions || 0
+                totalSubmissions: statsData.totalSubmissions || 0,
+                totalPoints: statsData.totalPoints || 0
             });
         } catch (error) {
             console.error('Failed to load progress:', error);
@@ -318,11 +328,12 @@ const UserDashboardPage = () => {
                     </motion.div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-px bg-white/5 mb-16">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-white/5 mb-16">
                         {[
+                            { icon: AchievementTrophy, label: 'Total Points', value: stats.totalPoints },
+                            { icon: EnergyZap, label: 'Streak', value: stats.currentStreak },
                             { icon: PrecisionTarget, label: 'Accuracy', value: `${stats.accuracy || 0}%` },
                             { icon: VerifiedCheck, label: 'Completed', value: stats.completedDays },
-                            { icon: EnergyZap, label: 'Streak', value: stats.currentStreak },
                             { icon: CodeFile, label: 'Languages', value: stats.languagesActive },
                         ].map((stat, i) => (
                             <StatCard key={i} stat={stat} i={i} />
@@ -404,7 +415,29 @@ const UserDashboardPage = () => {
                     </div>
                 </div>
             )}
-        </div>
+
+            {/* Relapse Mechanics */}
+            {
+                !loading && isRelapsed && !isDetoxOpen && (
+                    <RelapseOverlay
+                        user={user}
+                        onStartDetox={() => setIsDetoxOpen(true)}
+                    />
+                )
+            }
+
+            <DetoxModal
+                isOpen={isDetoxOpen}
+                onClose={() => setIsDetoxOpen(false)}
+                requiredDrills={user?.detoxRequired || 5}
+                onComplete={() => {
+                    // Refresh data after successful detox
+                    loadProgress();
+                    // Ideally we'd also force refresh the user context here to update status
+                    window.location.reload(); // Hard refresh to ensure sync for now
+                }}
+            />
+        </div >
     );
 };
 

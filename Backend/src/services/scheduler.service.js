@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { User } from '../models/index.js';
 import * as progressService from './progress.service.js';
+import { relapseService } from './relapse.service.js';
 import { hasCalendarDayWindowExpired, hasInactivityWindowExpired } from '../utils/timezone.js';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
@@ -72,6 +73,10 @@ export async function processExpiredWindows() {
 
                     if (rollbackResult) {
                         results.rollbacks++;
+
+                        // TRIGGER RELAPSE!
+                        await relapseService.triggerRelapse(user._id, reason, 5);
+
                         logger.info(
                             `Scheduler: Rolled back user ${user.email} in ${progress.language} ` +
                             `from day ${rollbackResult.rollbackFrom} to day ${rollbackResult.rollbackTo}`

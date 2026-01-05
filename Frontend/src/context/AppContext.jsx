@@ -15,8 +15,17 @@ export const AppProvider = ({ children }) => {
         const currentUser = authService.getCurrentUser();
         if (currentUser && authService.isAuthenticated()) {
             setUser(currentUser);
-            // Verify token is still valid
-            authService.getProfile().catch(() => {
+            // Verify token is still valid and refresh user data
+            authService.getProfile().then(response => {
+                const profileData = response?.data || response;
+                const userData = profileData?.user || profileData;
+                if (userData) {
+                    setUser(userData);
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    console.log('[AppContext] User status synced:', userData.status);
+                }
+            }).catch((err) => {
+                console.error('[AppContext] Failed to sync profile:', err);
                 authService.logout();
                 setUser(null);
             });
@@ -56,7 +65,7 @@ export const AppProvider = ({ children }) => {
         } catch (error) {
             addNotification({
                 type: 'error',
-                message: error.response?.data?.message || 'Login failed'
+                message: error.response?.data?.error?.message || error.response?.data?.message || 'Login failed'
             });
             throw error;
         } finally {

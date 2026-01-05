@@ -133,7 +133,9 @@ const LeaderboardPage = () => {
                                     <p className="text-3xl font-bold text-white leading-none mb-2">
                                         {myRank.score?.toLocaleString() || '0'}
                                     </p>
-                                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Total Score</p>
+                                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                                        {selectedLanguage ? `${languages.find(l => l.id === selectedLanguage)?.name} Mastery` : 'Global Prowess'}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-3xl font-bold text-white leading-none mb-2">
@@ -167,7 +169,7 @@ const LeaderboardPage = () => {
                                         <th className="px-8 py-6">Engineer</th>
                                         <th className="px-8 py-6">Language</th>
                                         <th className="px-8 py-6">Days Completed</th>
-                                        <th className="px-8 py-6">Score</th>
+                                        <th className="px-8 py-6">{selectedLanguage ? 'Mastery' : 'Prowess'}</th>
                                         <th className="px-8 py-6 text-right">Status</th>
                                     </tr>
                                 </thead>
@@ -231,11 +233,11 @@ const LeaderboardPage = () => {
                                                     </td>
                                                     <td className="px-8 py-6 text-right">
                                                         <span className={`text-xs font-bold uppercase tracking-widest ${displayRank === 1 ? 'text-white' :
-                                                                displayRank <= 3 ? 'text-white/95' :
-                                                                    displayRank <= 10 ? 'text-white/85' :
-                                                                        displayRank <= 25 ? 'text-white/70' :
-                                                                            displayRank <= 50 ? 'text-white/55' :
-                                                                                'text-white/40'
+                                                            displayRank <= 3 ? 'text-white/95' :
+                                                                displayRank <= 10 ? 'text-white/85' :
+                                                                    displayRank <= 25 ? 'text-white/70' :
+                                                                        displayRank <= 50 ? 'text-white/55' :
+                                                                            'text-white/40'
                                                             }`}>
                                                             {displayRank === 1 ? '🏆 Champion' :
                                                                 displayRank <= 3 ? '💎 Elite' :

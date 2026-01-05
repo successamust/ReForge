@@ -14,11 +14,18 @@ import CopyableCodeBlock from '../components/lessons/CopyableCodeBlock';
 import LessonSection from '../components/lessons/LessonSection';
 import AchievementToast from '../components/ui/AchievementToast';
 import { AnimatePresence } from 'framer-motion';
+import { telemetryService } from '../services/TelemetryService';
+import PasteGuard from '../components/ui/PasteGuard';
+import RelapseOverlay from '../components/ui/RelapseOverlay';
+import DetoxModal from '../components/ui/DetoxModal';
 
 const LessonDetailPage = () => {
     const { language, day } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated, addNotification } = useContext(AppContext);
+    const { isAuthenticated, user, addNotification } = useContext(AppContext);
+    const [isDetoxOpen, setIsDetoxOpen] = useState(false);
+
+    const isRelapsed = user?.status === 'relapsed';
     const [lesson, setLesson] = useState(null);
     const [code, setCode] = useState('');
     const [output, setOutput] = useState([]);
@@ -35,10 +42,13 @@ const LessonDetailPage = () => {
     const [lessonContent, setLessonContent] = useState([]);
     const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
     const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+    const [isPasteGuardOpen, setIsPasteGuardOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => setIsHeaderScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
+        // Start telemetry session
+        telemetryService.startSession();
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -236,7 +246,8 @@ const LessonDetailPage = () => {
         setOutput([{ type: 'info', text: 'Transmitting logic for manual verification...' }]);
 
         try {
-            const response = await submissionService.submitCode(language, parseInt(day), code);
+            const telemetryData = telemetryService.getCompressedData();
+            const response = await submissionService.submitCode(language, parseInt(day), code, telemetryData);
             const submissionData = response?.data?.submission || response?.submission || response;
 
             pollSubmissionResult(submissionData.id || submissionData._id);
@@ -248,7 +259,7 @@ const LessonDetailPage = () => {
         } catch (error) {
             addNotification({
                 type: 'error',
-                message: error.response?.data?.message || 'Submission failed'
+                message: error.response?.data?.error?.message || error.response?.data?.message || 'Submission failed'
             });
             setIsSubmitting(false);
         }
@@ -312,6 +323,9 @@ const LessonDetailPage = () => {
     const handleKeyDown = (e) => {
         const { key, target, metaKey, ctrlKey } = e;
         const { selectionStart, selectionEnd, value } = target;
+
+        // Log telemetry
+        telemetryService.logEvent('keydown', { key });
 
         // 0. Comment Toggle (Cmd+/ or Ctrl+/)
         if (key === '/' && (metaKey || ctrlKey)) {
@@ -712,10 +726,8 @@ const LessonDetailPage = () => {
                                                             wrap="off"
                                                             onPaste={(e) => {
                                                                 e.preventDefault();
-                                                                addNotification({
-                                                                    type: 'warning',
-                                                                    message: 'Pasting is disabled. Please type your code manually.'
-                                                                });
+                                                                setIsPasteGuardOpen(true);
+                                                                telemetryService.logEvent('paste');
                                                             }}
                                                             className="editor-layer editor-textarea"
                                                             placeholder="Write your code here..."
@@ -794,6 +806,28 @@ const LessonDetailPage = () => {
                     </>
                 )}
             </div >
+            <PasteGuard
+                isOpen={isPasteGuardOpen}
+                onClose={() => setIsPasteGuardOpen(false)}
+                onAcknowledge={() => setIsPasteGuardOpen(false)}
+            />
+
+            {/* Relapse Mechanics */}
+            {!loading && isRelapsed && !isDetoxOpen && (
+                <RelapseOverlay
+                    user={user}
+                    onStartDetox={() => setIsDetoxOpen(true)}
+                />
+            )}
+
+            <DetoxModal
+                isOpen={isDetoxOpen}
+                onClose={() => setIsDetoxOpen(false)}
+                requiredDrills={user?.detoxRequired || 5}
+                onComplete={() => {
+                    window.location.reload();
+                }}
+            />
         </>
     );
 };

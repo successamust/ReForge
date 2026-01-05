@@ -51,6 +51,10 @@ const progressSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
+    arenaLockoutUntil: {
+        type: Date,
+        default: null,
+    },
     adminOverride: {
         type: Boolean,
         default: false,
@@ -107,6 +111,20 @@ const userSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true,
+    },
+    status: {
+        type: String,
+        enum: ['active', 'relapsed', 'banned'],
+        default: 'active',
+        index: true
+    },
+    relapsedAt: {
+        type: Date,
+        default: null
+    },
+    detoxRequired: {
+        type: Number,
+        default: 0
     },
     subscription: {
         tier: { type: String, enum: ['free', 'premium'], default: 'free' },

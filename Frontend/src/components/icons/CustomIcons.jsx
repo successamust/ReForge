@@ -60,11 +60,15 @@ export const EnergyZap = ({ size = 24, className = "" }) => (
   </svg>
 );
 
+export const Zap = EnergyZap;
+
 export const PulseActivity = ({ size = 24, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
   </svg>
 );
+
+export const Activity = PulseActivity;
 
 export const SecureLock = ({ size = 24, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
@@ -153,5 +157,21 @@ export const EyeOff = ({ size = 24, className = "" }) => (
 export const ChevronDown = ({ size = 24, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
     <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
+export const Skull = ({ size = 24, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <path d="M9 10L9.01 10M15 10L15.01 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <path d="M8 20v-2h8v2M12 20v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M12 4c4.418 0 8 3.358 8 7.5c0 1.901-.755 3.637-2 4.933V18c0 1.105-.895 2-2 2H8c-1.105 0-2-.895-2-2v-1.567C4.755 15.137 4 13.401 4 11.5 4 7.358 7.582 4 12 4z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+  </svg>
+);
+
+export const ShieldAlert = ({ size = 24, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <path d="M12 2L3 7v9c0 5 9 8 9 8s9-3 9-8V7l-9-5z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );

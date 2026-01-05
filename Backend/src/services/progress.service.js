@@ -115,6 +115,7 @@ export async function getAllProgress(userId) {
             failedAt: progress.failedAt,
             attemptCount: progress.attemptCount,
             completedAt: progress.completedAt,
+            points: progress.points || 0,
             remainingWindow,
             isCompleted: progress.currentDay > config.maxDays || progress.completedAt !== null,
         };
@@ -581,6 +582,16 @@ async function updateUserStats(user, language, day, session, submissionData = {}
 
     if (user.stats.currentStreak > user.stats.maxStreak) {
         updateStats.$set['stats.maxStreak'] = user.stats.currentStreak;
+    }
+
+    // High Water Mark Check: Only award points if we are conquering NEW territory
+    // progress object (from memory) still has the OLD lastPassedDay initially
+    const progress = user.getProgress(language);
+
+    // We only award points if this day exceeds the user's previous best
+    if (day <= progress.lastPassedDay) {
+        logger.info(`User ${user._id} re-completed day ${day} (High Water Mark: ${progress.lastPassedDay}). No new points awarded.`);
+        return;
     }
 
     // Also update language-specific points

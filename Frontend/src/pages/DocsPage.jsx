@@ -10,7 +10,7 @@ const DocsPage = () => {
         const handleScroll = () => {
             const sections = [
                 'philosophy', 'mission', 'who-is-this-for', 'curriculum', 'progression',
-                'languages', 'submission', 'testing', 'scoring', 'streaks',
+                'languages', 'submission', 'testing', 'anticheat', 'scoring', 'relapse', 'streaks',
                 'leaderboard', 'achievements', 'premium', 'best-practices', 'faq'
             ];
 
@@ -89,7 +89,9 @@ const DocsPage = () => {
                                 <ul className="space-y-3">
                                     <li><NavLink href="#submission" section="submission">Code Submission</NavLink></li>
                                     <li><NavLink href="#testing" section="testing">Automated Testing</NavLink></li>
+                                    <li><NavLink href="#anticheat" section="anticheat">The Black Box (Anti-Cheat)</NavLink></li>
                                     <li><NavLink href="#scoring" section="scoring">Scoring</NavLink></li>
+                                    <li><NavLink href="#relapse" section="relapse">Relapse & Detox</NavLink></li>
                                     <li><NavLink href="#streaks" section="streaks">Streaks & Rollback</NavLink></li>
                                 </ul>
                             </div>
@@ -452,99 +454,76 @@ const DocsPage = () => {
                             </div>
                         </section>
 
-                        {/* Testing */}
-                        <section id="testing">
+                        {/* Testing Section (Closed) */}
+
+                        {/* Anti-Cheat Section */}
+                        <section id="anticheat">
                             <h2 className="text-3xl font-black text-white mb-8 tracking-tight flex items-center gap-3">
-                                <Target className="text-white/60" size={28} />
-                                AUTOMATED TESTING
+                                <Lock className="text-white/60" size={28} />
+                                THE BLACK BOX (ANTI-CHEAT)
                             </h2>
                             <div className="space-y-6">
                                 <p className="text-white/70 leading-relaxed">
-                                    Each lesson includes a comprehensive test suite. Tests are hidden to prevent hardcoding solutions. You must write general algorithms that handle all edge cases.
+                                    ReForge is a sanctuary for manual coding. To protect the integrity of the challenge, we employ a sophisticated telemetry system known as <strong className="text-white">The Black Box</strong>.
                                 </p>
-
                                 <div className="bg-white/5 border border-white/10 p-6 rounded-xl">
-                                    <h3 className="text-white font-bold text-lg mb-4">Test Categories</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <div className="text-white/40 text-xs uppercase tracking-widest mb-2">Basic Cases (30%)</div>
-                                            <p className="text-white/70 text-sm">Simple inputs to verify core logic works as expected</p>
-                                        </div>
-                                        <div>
-                                            <div className="text-white/40 text-xs uppercase tracking-widest mb-2">Edge Cases (30%)</div>
-                                            <p className="text-white/70 text-sm">Empty inputs, single elements, boundary conditions, special characters</p>
-                                        </div>
-                                        <div>
-                                            <div className="text-white/40 text-xs uppercase tracking-widest mb-2">Performance Tests (25%)</div>
-                                            <p className="text-white/70 text-sm">Large datasets to ensure algorithmic efficiency (O(n) vs O(n²) matters)</p>
-                                        </div>
-                                        <div>
-                                            <div className="text-white/40 text-xs uppercase tracking-widest mb-2">Stress Tests (15%)</div>
-                                            <p className="text-white/70 text-sm">Maximum constraints to test limits and catch memory leaks</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-6 rounded-xl">
-                                    <h3 className="text-white font-bold text-lg mb-4">Feedback System</h3>
-                                    <p className="text-white/70 text-sm mb-4">
-                                        When tests fail, you'll receive detailed feedback:
-                                    </p>
-                                    <ul className="space-y-2 text-white/60 text-sm">
-                                        <li>• Which test category failed (but not the exact input)</li>
-                                        <li>• Expected vs actual output format</li>
-                                        <li>• Runtime errors with stack traces</li>
-                                        <li>• Time/memory limit violations</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* Scoring */}
-                        <section id="scoring">
-                            <h2 className="text-3xl font-black text-white mb-8 tracking-tight">SCORING SYSTEM</h2>
-                            <div className="space-y-6">
-                                <p className="text-white/70 leading-relaxed">
-                                    Points are awarded based on <strong className="text-white">speed and accuracy</strong>. The faster you solve a problem correctly, the more points you earn.
-                                </p>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="bg-white/5 border border-white/10 p-6 rounded-xl text-center">
-                                        <div className="text-white/40 text-xs uppercase tracking-widest mb-2">Base Points</div>
-                                        <div className="text-white text-3xl font-black mb-2">100</div>
-                                        <p className="text-white/60 text-xs">For passing all tests</p>
-                                    </div>
-                                    <div className="bg-white/5 border border-white/10 p-6 rounded-xl text-center">
-                                        <div className="text-white/40 text-xs uppercase tracking-widest mb-2">Speed Bonus</div>
-                                        <div className="text-white text-3xl font-black mb-2">+50</div>
-                                        <p className="text-white/60 text-xs">Solved under 30 minutes</p>
-                                    </div>
-                                    <div className="bg-white/5 border border-white/10 p-6 rounded-xl text-center">
-                                        <div className="text-white/40 text-xs uppercase tracking-widest mb-2">First Try</div>
-                                        <div className="text-white text-3xl font-black mb-2">+25</div>
-                                        <p className="text-white/60 text-xs">No failed submissions</p>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white/5 border border-white/10 p-6 rounded-xl">
-                                    <h3 className="text-white font-bold text-lg mb-4">Bonus Multipliers</h3>
+                                    <h3 className="text-white font-bold text-lg mb-4">Verification Heuristics</h3>
                                     <ul className="space-y-3 text-white/60 text-sm">
                                         <li className="flex items-start gap-3">
                                             <div className="w-1.5 h-1.5 bg-white/40 rounded-none mt-2 flex-shrink-0" />
-                                            <span><strong className="text-white">Streak Multiplier</strong> - 1.1x for 7+ day streak, 1.2x for 14+ days, 1.5x for 30 days</span>
+                                            <span><strong className="text-white">Keystroke Dynamics</strong> - We record and analyze typing rhythm and timing variance.</span>
                                         </li>
                                         <li className="flex items-start gap-3">
                                             <div className="w-1.5 h-1.5 bg-white/40 rounded-none mt-2 flex-shrink-0" />
-                                            <span><strong className="text-white">Perfect Week</strong> - +200 bonus for completing all 7 lessons in a week</span>
+                                            <span><strong className="text-white">Paste Guard</strong> - Copy-pasting code into the editor is strictly prohibited and flagged.</span>
                                         </li>
                                         <li className="flex items-start gap-3">
                                             <div className="w-1.5 h-1.5 bg-white/40 rounded-none mt-2 flex-shrink-0" />
-                                            <span><strong className="text-white">Optimal Solution</strong> - +50 if your solution matches the optimal time/space complexity</span>
+                                            <span><strong className="text-white">Telemetry Compression</strong> - High-resolution event data is transmitted with every submission.</span>
                                         </li>
                                     </ul>
                                 </div>
+                                <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 p-6 rounded-xl">
+                                    <h4 className="text-purple-400 font-bold mb-2">The "Verified" Badge</h4>
+                                    <p className="text-white/60 text-sm leading-relaxed">
+                                        Submissions that pass through The Black Box with low suspicion scores receive a "Verified" badge. This badge is required for top-tier leaderboard placement.
+                                    </p>
+                                </div>
                             </div>
                         </section>
+
+                        {/* Scoring Section (Existing) */}
+
+                        {/* Scoring Section (Closed) */}
+
+                        {/* Relapse Section */}
+                        <section id="relapse">
+                            <h2 className="text-3xl font-black text-white mb-8 tracking-tight flex items-center gap-3">
+                                <Zap className="text-white/60" size={28} />
+                                RELAPSE & DETOX
+                            </h2>
+                            <div className="space-y-6">
+                                <p className="text-white/70 leading-relaxed">
+                                    ReForge is a platform of discipline. If you lose focus, the system will enforce a <strong className="text-white">Relapse State</strong>.
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-red-500/5 border border-red-500/20 p-6 rounded-xl">
+                                        <h3 className="text-red-400 font-bold mb-2">Trigger: Inactivity</h3>
+                                        <p className="text-white/60 text-sm">
+                                            Missing a full calendar day of practice triggers a relapse. Your status changes, and access to the dashboard is revoked.
+                                        </p>
+                                    </div>
+                                    <div className="bg-white/5 border border-white/10 p-6 rounded-xl">
+                                        <h3 className="text-white font-bold mb-2">The Detox Protocol</h3>
+                                        <p className="text-white/60 text-sm">
+                                            To recover, you must complete the Detox Protocol: a series of rapid-fire syntax drills designed to recalibrate your neural link.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Streaks Section (Existing) */}
 
                         {/* Streaks */}
                         <section id="streaks">

@@ -8,7 +8,8 @@ import {
     CodeShield,
     ChevronDown,
     NeuralCore,
-    TrendingUp
+    TrendingUp,
+    Skull
 } from './icons/CustomIcons';
 import { AppContext } from '../context/AppContext';
 import Button from './ui/Button';
@@ -141,6 +142,7 @@ const Navbar = () => {
         { name: 'Lessons', href: '/lessons', icon: CodeFile },
         { name: 'Leaderboard', href: '/leaderboard', icon: AwardMedal },
         { name: 'Practice', href: '/practice', icon: CodeTerminal },
+        { name: 'Arena', href: '/arena', icon: Skull, auth: true },
         { name: 'Dashboard', href: '/dashboard', icon: TrendingUp, auth: true },
         { name: 'Admin', href: '/admin', icon: CodeShield, auth: true, adminOnly: true },
     ];

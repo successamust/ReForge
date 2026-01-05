@@ -29,7 +29,7 @@ api.interceptors.response.use(
                 window.location.href = '/login';
             }
         }
-        const message = error.response?.data?.message || 'Something went wrong';
+        const message = error.response?.data?.error?.message || error.response?.data?.message || 'Something went wrong';
         console.error('[API Error]:', message);
         return Promise.reject(error);
     }
