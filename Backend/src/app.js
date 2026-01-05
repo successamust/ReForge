@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import rateLimit from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import routes from './routes/index.js';
@@ -13,6 +14,7 @@ import config from './config/index.js';
 import logger from './utils/logger.js';
 import { configurePassport } from './config/passport.js';
 import passport from 'passport';
+import { getRedisConnection } from './config/redis.js';
 
 const app = express();
 
@@ -45,7 +47,12 @@ app.use(cors({
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per windowMs
-    skip: () => config.env === 'development' || config.env === 'test', // Skip rate limiting in development/test
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => config.env === 'development' || config.env === 'test',
+    store: new RedisStore({
+        sendCommand: (...args) => getRedisConnection().call(...args),
+    }),
     message: {
         success: false,
         error: {

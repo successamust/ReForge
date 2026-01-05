@@ -50,9 +50,9 @@ export function startWorker() {
                     port: config.redis.port,
                     password: config.redis.password,
                 },
-            concurrency: 5,
+            concurrency: 10, // Increased from 5 for better throughput
             limiter: {
-                max: 10,
+                max: 20, // Increased from 10
                 duration: 1000,
             },
         }

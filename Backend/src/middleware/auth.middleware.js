@@ -1,6 +1,6 @@
 import * as authService from '../services/auth.service.js';
 import { AuthenticationError, AuthorizationError } from '../utils/errors.js';
-import User from '../models/user.model.js';
+import User from '../models/User.js';
 
 /**
  * Authenticate user via JWT token
@@ -16,7 +16,7 @@ export const authenticate = async (req, res, next) => {
         const token = authHeader.split(' ')[1];
         const decoded = authService.verifyToken(token);
 
-        const user = await User.findById(decoded.id);
+        const user = await User.findById(decoded.userId);
         if (!user) {
             throw new AuthenticationError('User not found');
         }

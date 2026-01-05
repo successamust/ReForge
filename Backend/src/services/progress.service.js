@@ -10,6 +10,7 @@ import {
 import { Lesson } from '../models/index.js';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
+import * as leaderboardService from './leaderboard.service.js';
 
 export async function getProgress(userId, language) {
     const user = await User.findById(userId);
@@ -223,6 +224,11 @@ export async function advanceProgress(userId, language, day, submissionData = {}
         });
 
         await session.commitTransaction();
+
+        // Update leaderboard asynchronously
+        leaderboardService.updateUserRank(userId).catch(err => {
+            logger.error(`Failed to update leaderboard for user ${userId}:`, err);
+        });
 
         return {
             success: true,
@@ -577,7 +583,17 @@ async function updateUserStats(user, language, day, session, submissionData = {}
         updateStats.$set['stats.maxStreak'] = user.stats.currentStreak;
     }
 
-    await User.updateOne({ _id: user._id }, updateStats, { session });
+    // Also update language-specific points
+    updateStats.$inc['progress.$.points'] = finalPoints;
+
+    await User.updateOne(
+        {
+            _id: user._id,
+            'progress.language': language
+        },
+        updateStats,
+        { session }
+    );
 
     logger.info(`User ${user._id} earned ${finalPoints} points (base: ${points}, multiplier: ${streakMultiplier}x)`);
 }

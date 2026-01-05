@@ -1,3 +1,6 @@
+import { User, Achievement, AuditLog } from '../models/index.js';
+import logger from '../utils/logger.js';
+
 export async function checkAchievements(userId, context = {}) {
     const user = await User.findById(userId);
     if (!user) { return; }

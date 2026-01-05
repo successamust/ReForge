@@ -23,6 +23,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response.data,
     (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
+        }
         const message = error.response?.data?.message || 'Something went wrong';
         console.error('[API Error]:', message);
         return Promise.reject(error);

@@ -18,4 +18,18 @@ const router = Router();
  */
 router.get('/', authenticate, leaderboardController.getLeaderboard);
 
+/**
+ * @swagger
+ * /v1/leaderboard/me:
+ *   get:
+ *     summary: Get authenticated user's personal rank
+ *     tags: [Leaderboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User's personal rank and stats
+ */
+router.get('/me', authenticate, leaderboardController.getMyRank);
+
 export default router;

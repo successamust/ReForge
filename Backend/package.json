@@ -27,6 +27,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@sendgrid/mail": "^8.1.6",
     "@sentry/node": "^10.32.1",
     "@sentry/profiling-node": "^10.32.1",
@@ -48,6 +49,7 @@
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
     "pdfkit": "^0.14.0",
+    "rate-limit-redis": "^4.3.1",
     "stripe": "^20.1.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",

@@ -1,78 +1,65 @@
 import { User, Leaderboard } from '../models/index.js';
+import * as leaderboardRedis from '../utils/leaderboard.redis.js';
 import logger from '../utils/logger.js';
 
 /**
  * Get global leaderboard with optional language filter
+ * Now uses Redis Sorted Sets for O(log N + M) performance
  * @param {number} limit - Maximum number of entries to return
  * @param {string|null} language - Optional language filter (e.g., 'javascript', 'python')
  */
-export async function getGlobalLeaderboard(limit = 100, language = null) {
+export async function getGlobalLeaderboard(limit = 100, language = null, offset = 0) {
     try {
-        // Query users with progress
-        const users = await User.find({ isActive: true })
+        // Get top users from Redis
+        const topUsers = await leaderboardRedis.getTopUsers(language, limit, offset);
+
+        if (topUsers.length === 0) {
+            return [];
+        }
+
+        // Fetch user details from MongoDB
+        const userIds = topUsers.map(u => u.userId);
+        const users = await User.find({ _id: { $in: userIds } })
             .select('email firstName lastName progress')
             .lean();
 
-        // Build leaderboard entries
+        // Create a map for quick lookup
+        const userMap = new Map(users.map(u => [u._id.toString(), u]));
+
+        // Build leaderboard entries with user details
         const entries = [];
+        for (const { userId, score, rank } of topUsers) {
+            const user = userMap.get(userId);
+            if (!user) continue;
 
-        for (const user of users) {
-            if (!user.progress || user.progress.length === 0) continue;
+            // Extract progress info
+            const langProgress = language
+                ? user.progress.find(p => p.language === language)
+                : user.progress.reduce((max, p) => p.lastPassedDay > max.lastPassedDay ? p : max, { lastPassedDay: 0 });
 
-            if (language) {
-                // Language-specific leaderboard
-                const langProgress = user.progress.find(p => p.language === language);
-                if (!langProgress || langProgress.lastPassedDay === 0) continue;
+            if (!langProgress || langProgress.lastPassedDay === 0) continue;
 
-                entries.push({
-                    _id: `${user._id}_${language}`,
-                    user: {
-                        _id: user._id,
-                        email: user.email,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                    },
-                    language: language,
-                    lastPassedDay: langProgress.lastPassedDay,
-                    currentDay: langProgress.currentDay,
-                    // Score: days passed * 100, with bonus for completion
-                    score: langProgress.lastPassedDay * 100 + (langProgress.lastPassedDay === 30 ? 1000 : 0),
-                    completedAt: langProgress.completedAt,
-                });
-            } else {
-                // All languages - create entry for each language the user has progress in
-                for (const prog of user.progress) {
-                    if (prog.lastPassedDay === 0) continue;
-
-                    entries.push({
-                        _id: `${user._id}_${prog.language}`,
-                        user: {
-                            _id: user._id,
-                            email: user.email,
-                            firstName: user.firstName,
-                            lastName: user.lastName,
-                        },
-                        language: prog.language,
-                        lastPassedDay: prog.lastPassedDay,
-                        currentDay: prog.currentDay,
-                        // Score: days passed * 100, with bonus for completion
-                        score: prog.lastPassedDay * 100 + (prog.lastPassedDay === 30 ? 1000 : 0),
-                        completedAt: prog.completedAt,
-                    });
-                }
-            }
+            entries.push({
+                _id: `${userId}_${language || 'global'}`,
+                user: {
+                    _id: user._id,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                },
+                language: language || langProgress.language,
+                lastPassedDay: langProgress.lastPassedDay,
+                currentDay: langProgress.currentDay,
+                currentDay: langProgress.currentDay,
+                currentDay: langProgress.currentDay,
+                // If filtering by language, show that language's points. If global, show total points.
+                score: language ? (langProgress.points || 0) : (user.stats?.totalPoints || 0),
+                rank,
+                completedAt: langProgress.completedAt,
+            });
         }
 
-        // Sort by score (descending), then by lastPassedDay (descending), then by completedAt (ascending - earlier is better)
-        entries.sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            if (b.lastPassedDay !== a.lastPassedDay) return b.lastPassedDay - a.lastPassedDay;
-            if (a.completedAt && b.completedAt) return new Date(a.completedAt) - new Date(b.completedAt);
-            return 0;
-        });
-
-        // Return top entries
-        return entries.slice(0, limit);
+        return entries;
     } catch (error) {
         logger.error('Error fetching leaderboard:', error);
         return [];
@@ -82,28 +69,34 @@ export async function getGlobalLeaderboard(limit = 100, language = null) {
 /**
  * Update leaderboard for a specific user
  * Called when a submission is passed
+ * Now updates both Redis (for fast queries) and MongoDB (for backup/audit)
  */
 export async function updateUserRank(userId) {
     try {
         const user = await User.findById(userId);
         if (!user) { return; }
 
-        // Calculate total stats from progress array
-        let passedDays = 0;
-        const totalCompletionTimeMs = 0; // This could be refined to track actual coding time
+        // Update Redis leaderboard for each language the user has progress in
+        // We use totalPoints as the score for all leaderboards (Per user request: Points based everywhere)
+        const totalPoints = user.stats?.totalPoints || 0;
 
-        for (const p of user.progress) {
-            if (p.completedAt) {
-                passedDays += p.currentDay > p.lastPassedDay ? p.lastPassedDay : p.currentDay - 1;
-                // Note: Simple logic here. Ideally, we sum up 'lastPassedDay' across all languages if they are additive?
-                // Actually, let's just count total passed days across all languages.
+        // Update global leaderboard
+        await leaderboardRedis.updateUserRank(userId.toString(), 'global', totalPoints);
+
+        for (const progress of user.progress) {
+            if (progress.lastPassedDay > 0) {
+                // Update Redis language specific leaderboards
+                // Using Language-Specific Points as the sorting metric
+                await leaderboardRedis.updateUserRank(
+                    userId.toString(),
+                    progress.language,
+                    progress.points || 0 // Use specific language points
+                );
             }
-            passedDays += p.lastPassedDay;
         }
 
-        // Re-calculate strictly
-        passedDays = user.progress.reduce((acc, curr) => acc + curr.lastPassedDay, 0);
-
+        // Also update MongoDB for backup/audit trail
+        const passedDays = user.progress.reduce((acc, curr) => acc + curr.lastPassedDay, 0);
         await Leaderboard.findOneAndUpdate(
             { userId },
             {
@@ -111,7 +104,7 @@ export async function updateUserRank(userId) {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 passedDays,
-                totalCompletionTimeMs, // Placeholder for now
+                totalCompletionTimeMs: 0,
                 lastUpdated: new Date()
             },
             { upsert: true, new: true }
@@ -132,4 +125,8 @@ export async function refreshLeaderboard() {
         await updateUserRank(user._id);
     }
     logger.info('Leaderboard refreshed.');
+}
+
+export async function clearLeaderboard(language = null) {
+    return leaderboardRedis.clearLeaderboard(language);
 }
