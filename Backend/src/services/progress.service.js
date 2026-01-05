@@ -159,6 +159,7 @@ export async function advanceProgress(userId, language, day, submissionData = {}
                     'progress.$.currentDay': day < config.maxDays ? day + 1 : day,
                     'progress.$.failedDay': null,
                     'progress.$.failedAt': null,
+                    'progress.$.lastAdvancedAt': new Date(),
                     'progress.$.completedAt': day >= config.maxDays ? new Date() : null,
                     'progress.$.attemptCount': 0, // Reset on pass
                 },
@@ -183,6 +184,7 @@ export async function advanceProgress(userId, language, day, submissionData = {}
                                 lastPassedDay: day,
                                 failedDay: null,
                                 failedAt: null,
+                                lastAdvancedAt: new Date(),
                                 attemptCount: 0,
                                 completedAt: day >= config.maxDays ? new Date() : null,
                             },

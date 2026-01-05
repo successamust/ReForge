@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { User } from '../models/index.js';
 import * as progressService from './progress.service.js';
-import { hasCalendarDayWindowExpired } from '../utils/timezone.js';
+import { hasCalendarDayWindowExpired, hasInactivityWindowExpired } from '../utils/timezone.js';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
 
@@ -25,26 +25,39 @@ export async function processExpiredWindows() {
     };
 
     try {
-        const usersWithFailures = await User.find({
-            'progress.failedAt': { $ne: null },
+        const usersToCheck = await User.find({
             isActive: true,
+            'progress.completedAt': null,
         }).select('_id email timezone progress');
 
-        logger.info(`Scheduler found ${usersWithFailures.length} users with active failures`);
+        logger.info(`Scheduler found ${usersToCheck.length} active users to check for rollbacks`);
 
-        for (const user of usersWithFailures) {
+        for (const user of usersToCheck) {
             for (const progress of user.progress) {
-                if (!progress.failedAt || progress.adminOverride) {
+                // Skip if admin override is active or if there's no failedAt and no lastAdvancedAt (nothing to check)
+                if (progress.adminOverride || (!progress.failedAt && !progress.lastAdvancedAt)) {
                     continue;
                 }
 
                 results.processed++;
 
                 try {
-                    const expired = hasCalendarDayWindowExpired(
-                        progress.failedAt,
-                        user.timezone
-                    );
+                    let expired = false;
+                    let reason = '';
+
+                    if (progress.failedAt) {
+                        expired = hasCalendarDayWindowExpired(
+                            progress.failedAt,
+                            user.timezone
+                        );
+                        reason = 'Calendar day window expired after failure';
+                    } else if (progress.lastAdvancedAt) {
+                        expired = hasInactivityWindowExpired(
+                            progress.lastAdvancedAt,
+                            user.timezone
+                        );
+                        reason = 'Inactivity: Missed a full calendar day';
+                    }
 
                     if (!expired) {
                         results.skipped++;

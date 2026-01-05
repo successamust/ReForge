@@ -23,36 +23,6 @@ async function seed() {
             await Lesson.deleteMany({});
         }
 
-        // Create admin user
-        logger.info('Creating admin user...');
-        const adminExists = await User.findByEmail(config.admin.email);
-        if (!adminExists) {
-            const admin = new User({
-                email: config.admin.email,
-                passwordHash: config.admin.password,
-                firstName: 'Admin',
-                lastName: 'Admin',
-                role: 'admin',
-                timezone: 'UTC',
-            });
-            await admin.save();
-            logger.info(`Admin user created: ${config.admin.email}`);
-        }
-
-        // Create test user
-        const testUserExists = await User.findByEmail('test@example.com');
-        if (!testUserExists) {
-            const testUser = new User({
-                email: 'test@example.com',
-                passwordHash: 'password123',
-                firstName: 'Test',
-                lastName: 'User',
-                role: 'user',
-                timezone: 'America/New_York',
-            });
-            await testUser.save();
-            logger.info('Test user created: test@example.com');
-        }
 
         // Seed lessons for all languages
         logger.info('Seeding lessons...');

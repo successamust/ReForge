@@ -88,6 +88,30 @@ export function getRemainingWindowTime(failedAt, timezone = 'UTC', now = new Dat
 }
 
 /**
+ * Check if the inactivity window has expired (missed a full calendar day)
+ * @param {Date} lastAdvancedAt - The timestamp when the user last passed a day
+ * @param {string} timezone - User's timezone
+ * @param {Date} now - Current time (optional)
+ * @returns {boolean} - True if the window has expired
+ */
+export function hasInactivityWindowExpired(lastAdvancedAt, timezone = 'UTC', now = new Date()) {
+    // A user has one full calendar day AFTER the day they last advanced.
+    // So if lastAdvancedAt is Monday, they have all of Tuesday.
+    // The deadline is midnight between Tuesday and Wednesday.
+
+    // 1. Get end of the day they last advanced
+    const endOfCurrentDay = getEndOfCalendarDay(lastAdvancedAt, timezone);
+
+    // 2. Add 12 hours to guarantee we are inside the NEXT calendar day
+    const insideNextDay = new Date(endOfCurrentDay.getTime() + (12 * 60 * 60 * 1000));
+
+    // 3. Get the end of THAT next day
+    const deadline = getEndOfCalendarDay(insideNextDay, timezone);
+
+    return now >= deadline;
+}
+
+/**
  * Format remaining time as human-readable string
  * @param {number} ms - Milliseconds remaining
  * @returns {string} - Human-readable duration

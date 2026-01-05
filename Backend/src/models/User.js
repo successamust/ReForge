@@ -35,6 +35,10 @@ const progressSchema = new mongoose.Schema({
         default: 0,
         min: 0,
     },
+    lastAdvancedAt: {
+        type: Date,
+        default: Date.now,
+    },
     lockedUntil: {
         type: Date,
         default: null,
