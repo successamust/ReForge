@@ -640,6 +640,7 @@ export async function getUserStats(userId) {
         streak: user.stats.currentStreak || 0,
         maxStreak: user.stats.maxStreak || 0,
         totalPoints: user.stats.totalPoints || 0,
+        totalArenaWins: user.stats.totalArenaWins || 0,
         accuracy: accuracy,
         totalSubmissions: submissionStats.total,
         successfulSubmissions: submissionStats.completed

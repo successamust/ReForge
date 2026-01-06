@@ -1,7 +1,13 @@
-import { Lesson, User, Submission, AuditLog, Achievement } from '../models/index.js';
+import { Lesson, User, Submission, AuditLog, Achievement, SuddenDeathSession } from '../models/index.js';
 import * as progressService from '../services/progress.service.js';
 import * as gradingService from '../services/grading.service.js';
 import { NotFoundError } from '../utils/errors.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Create a new lesson
@@ -367,7 +373,7 @@ export async function getSystemStats(req, res, next) {
         const newUsersToday = await User.countDocuments({ createdAt: { $gte: today } });
 
         const activeToday = await User.countDocuments({
-            'stats.lastActivityAt': { $gte: today }
+            'stats.lastActivityAt': { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
         });
 
         const totalPoints = await User.aggregate([
@@ -440,8 +446,18 @@ export async function getSystemStats(req, res, next) {
                 growth: growthData,
                 popularity: languagePopularity,
                 trends: submissionTrends,
+                arena: {
+                    totalSessions: await SuddenDeathSession.countDocuments(),
+                    completedSessions: await SuddenDeathSession.countDocuments({ status: 'completed' }),
+                    failedSessions: await SuddenDeathSession.countDocuments({ status: 'failed' }),
+                    activeLockouts: await User.countDocuments({ 'progress.arenaLockoutUntil': { $gt: new Date() } }),
+                    totalBreaches: (await User.aggregate([
+                        { $group: { _id: null, total: { $sum: '$stats.totalArenaWins' } } }
+                    ]))[0]?.total || 0
+                },
                 system: {
                     nodeVersion: process.version,
+                    nodeRequired: (JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'))).engines.node,
                     memoryUsage: process.memoryUsage(),
                     uptime: process.uptime(),
                 }

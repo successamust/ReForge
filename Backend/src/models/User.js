@@ -136,6 +136,7 @@ const userSchema = new mongoose.Schema({
         currentStreak: { type: Number, default: 0 },
         maxStreak: { type: Number, default: 0 },
         totalPoints: { type: Number, default: 0 },
+        totalArenaWins: { type: Number, default: 0 },
         lastActivityAt: Date,
     },
 }, {

@@ -91,6 +91,30 @@ const AdminDashboardPage = () => {
                     />
                 </div>
 
+                <h2 className="text-xl font-black text-white mb-6 uppercase tracking-widest border-l-2 border-red-500 pl-4">Arena Performance</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <StatCard
+                        title="Total Breaches"
+                        value={stats?.arena?.totalBreaches}
+                        subtext="Cumulative 10-part run successes"
+                    />
+                    <StatCard
+                        title="Success Rate"
+                        value={stats?.arena?.totalSessions ? Math.round((stats?.arena?.completedSessions / stats?.arena?.totalSessions) * 100) : 0}
+                        subtext={`${stats?.arena?.completedSessions || 0} / ${stats?.arena?.totalSessions || 0} sessions`}
+                    />
+                    <StatCard
+                        title="Arena Failures"
+                        value={stats?.arena?.failedSessions}
+                        subtext="Timeouts and syntax deaths"
+                    />
+                    <StatCard
+                        title="Active Lockouts"
+                        value={stats?.arena?.activeLockouts}
+                        subtext="Users currently in cooldown"
+                    />
+                </div>
+
                 {/* Charts Selection */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
                     <div className="lg:col-span-2">
@@ -110,7 +134,14 @@ const AdminDashboardPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                             <div className="flex justify-between border-b border-white/10 pb-4">
                                 <span className="text-white/60">Node Version</span>
-                                <span className="text-white font-mono">{stats?.system?.nodeVersion}</span>
+                                <div className="text-right">
+                                    <span className={`font-mono ${stats?.system?.nodeVersion?.includes('v22') ? 'text-green-500' : 'text-amber-500'}`}>
+                                        {stats?.system?.nodeVersion}
+                                    </span>
+                                    <span className="text-[10px] text-white/20 block font-mono">
+                                        Required: {stats?.system?.nodeRequired}
+                                    </span>
+                                </div>
                             </div>
                             <div className="flex justify-between border-b border-white/10 pb-4">
                                 <span className="text-white/60">Uptime</span>

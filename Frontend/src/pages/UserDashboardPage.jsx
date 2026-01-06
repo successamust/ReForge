@@ -158,7 +158,8 @@ const UserDashboardPage = () => {
         totalDays: 0,
         completedDays: 0,
         currentStreak: 0,
-        languagesActive: 0
+        languagesActive: 0,
+        totalArenaWins: 0
     });
     const [isDetoxOpen, setIsDetoxOpen] = useState(false);
 
@@ -206,7 +207,8 @@ const UserDashboardPage = () => {
                 languagesActive,
                 accuracy: statsData.accuracy || 0,
                 totalSubmissions: statsData.totalSubmissions || 0,
-                totalPoints: statsData.totalPoints || 0
+                totalPoints: statsData.totalPoints || 0,
+                totalArenaWins: statsData.totalArenaWins || 0
             });
         } catch (error) {
             console.error('Failed to load progress:', error);
@@ -328,13 +330,14 @@ const UserDashboardPage = () => {
                     </motion.div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-white/5 mb-16">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-px bg-white/5 mb-16">
                         {[
                             { icon: AchievementTrophy, label: 'Total Points', value: stats.totalPoints },
                             { icon: EnergyZap, label: 'Streak', value: stats.currentStreak },
                             { icon: PrecisionTarget, label: 'Accuracy', value: `${stats.accuracy || 0}%` },
                             { icon: VerifiedCheck, label: 'Completed', value: stats.completedDays },
                             { icon: CodeFile, label: 'Languages', value: stats.languagesActive },
+                            { icon: NeuralCore, label: 'Arena Breaches', value: stats.totalArenaWins },
                         ].map((stat, i) => (
                             <StatCard key={i} stat={stat} i={i} />
                         ))}

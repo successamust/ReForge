@@ -24,6 +24,16 @@ export const authenticate = async (req, res, next) => {
         req.user = user;
         req.userId = user._id;
 
+        // Pulse: Update last activity (non-blocking)
+        const now = new Date();
+        const lastActivity = user.stats?.lastActivityAt;
+        if (!lastActivity || (now - lastActivity) > 5 * 60 * 1000) { // Throttle to 5 mins
+            User.updateOne(
+                { _id: user._id },
+                { $set: { 'stats.lastActivityAt': now } }
+            ).catch(err => console.error('Activity pulse failed:', err));
+        }
+
         next();
     } catch (error) {
         next(error);

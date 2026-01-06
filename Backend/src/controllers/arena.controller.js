@@ -206,6 +206,7 @@ export async function submitArenaCode(req, res, next) {
                     {
                         $inc: {
                             'stats.totalPoints': 2500,
+                            'stats.totalArenaWins': 1,
                             'progress.$.points': 2500
                         }
                     },
