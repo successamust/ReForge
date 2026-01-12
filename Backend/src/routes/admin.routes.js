@@ -242,4 +242,17 @@ router.get('/heatmap', adminController.getDifficultyHeatmap);
  */
 router.get('/submissions/:id/code', adminController.getSubmissionCode);
 
+/**
+ * @swagger
+ * /v1/admin/users/{id}/reset-lockout:
+ *   put:
+ *     summary: Reset Arena lockout for user
+ *     tags: [Admin]
+ */
+router.put(
+    '/users/:id/reset-lockout',
+    validateParams(schemas.submissionIdParam),
+    adminController.resetArenaLockout
+);
+
 export default router;

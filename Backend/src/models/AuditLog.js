@@ -36,6 +36,14 @@ const auditLogSchema = new mongoose.Schema({
             'ADMIN_LESSON_UPDATE',
             'ADMIN_LESSON_DELETE',
             'ADMIN_USER_UPDATE',
+            'ADMIN_LOCKOUT_RESET',
+
+            // Arena actions
+            'ARENA_START',
+            'ARENA_ABANDONED',
+            'ARENA_DEATH',
+            'ARENA_TIMEOUT',
+            'ARENA_COMPLETE',
 
             // Certificate actions
             'CERTIFICATE_GENERATE',
@@ -71,7 +79,7 @@ auditLogSchema.index({ createdAt: -1 });
 auditLogSchema.index({ userId: 1, createdAt: -1 });
 
 // Static method to log an action
-auditLogSchema.statics.log = async function (data) {
+auditLogSchema.statics.log = async function (data, options = {}) {
     const log = new this({
         userId: data.userId,
         action: data.action,
@@ -81,7 +89,7 @@ auditLogSchema.statics.log = async function (data) {
         ipAddress: data.ipAddress || null,
     });
 
-    return log.save();
+    return log.save(options);
 };
 
 // Static method to get user's audit history
@@ -111,11 +119,11 @@ auditLogSchema.statics.getUserHistory = function (userId, options = {}) {
 };
 
 // Static method for progress-related logs
-auditLogSchema.statics.logProgress = async function (data) {
+auditLogSchema.statics.logProgress = async function (data, options = {}) {
     return this.log({
         ...data,
         action: data.action,
-    });
+    }, options);
 };
 
 const AuditLog = mongoose.model('AuditLog', auditLogSchema);

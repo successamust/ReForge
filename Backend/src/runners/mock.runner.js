@@ -76,10 +76,17 @@ export async function runWithMock(language, code, tests, operation = 'test') {
             stderr = 'Execution error';
             passed = false;
         } else {
-            // Check for basic patterns that suggest correct implementation
-            const hasFunction = /function|def|func|public\s+static|=>/.test(code);
-            const hasReturn = /return|print|console\.log|fmt\.Print|Console\.Write/.test(code);
-            const hasLogic = code.length > 20 && (hasFunction || hasReturn);
+            // Strip comments before checking for logic to avoid false positives
+            // JS/Java/Go/C# style: // and /* */
+            // Python style: #
+            const cleanCode = code
+                .replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, '$1')
+                .replace(/#.*$/gm, '');
+
+            // Check for basic patterns that suggest correct implementation using clean code
+            const hasFunction = /function|def|func|public\s+static|=>/.test(cleanCode);
+            const hasReturn = /return|print|console\.log|fmt\.Print|Console\.Write/.test(cleanCode);
+            const hasLogic = cleanCode.trim().length > 10 && (hasFunction || hasReturn);
 
             // 80% pass rate for reasonable-looking code
             passed = hasLogic && Math.random() > 0.2;

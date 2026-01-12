@@ -15,6 +15,8 @@ class TelemetryService {
      * Start a new recording session
      */
     startSession() {
+        if (this.isRecording) return; // Prevent multiple starts in same component lifecycle
+
         this.events = [];
         this.startTime = Date.now();
         this.pasteCount = 0;

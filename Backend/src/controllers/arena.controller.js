@@ -92,42 +92,79 @@ export async function startSession(req, res, next) {
             return Math.max(120, Math.floor(limit));
         });
 
-        // Close any existing active sessions as FORFEITED
+        // Close any existing active sessions
         const activeSessions = await SuddenDeathSession.find({ userId, language, status: 'active' });
 
         if (activeSessions.length > 0) {
-            await SuddenDeathSession.updateMany(
-                { userId, language, status: 'active' },
-                { status: 'failed', endTime: new Date(), livesRemaining: 0 }
-            );
+            const sessionsToFail = [];
+            const sessionsToExpire = [];
 
-            // Apply Abandonment Penalty
-            const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-            const pointDeduction = -100;
-
-            await User.updateOne(
-                { _id: userId, 'progress.language': language },
-                {
-                    $set: { 'progress.$.arenaLockoutUntil': lockoutUntil },
-                    $inc: {
-                        'stats.totalPoints': pointDeduction,
-                        'progress.$.points': pointDeduction
+            for (const sess of activeSessions) {
+                if (sess.isExpired()) {
+                    sessionsToExpire.push(sess._id);
+                } else {
+                    // Only apply penalty if they have actually made progress
+                    // This prevents double-click/refresh at level 1 from locking them out
+                    if (sess.currentProblemIndex === 0) {
+                        sessionsToExpire.push(sess._id); // Map to expire (silent fail)
+                    } else {
+                        sessionsToFail.push(sess._id);
                     }
                 }
-            );
+            }
 
-            await AuditLog.log({
-                userId,
-                action: 'ARENA_ABANDONED',
-                payload: {
-                    sessionId: activeSessions[0]._id,
-                    language,
-                    lockoutUntil,
-                    pointDeduction
-                }
-            });
+            // 1. Handle silent closures (expired or level 1 abandons)
+            if (sessionsToExpire.length > 0) {
+                await SuddenDeathSession.updateMany(
+                    { _id: { $in: sessionsToExpire } },
+                    { status: 'expired', endTime: new Date(), livesRemaining: 0 }
+                );
 
-            throw new AuthorizationError(`ARENA PROTOCOL BREACH: System abandoned. Burnout lockout active for 60 minutes.`);
+                await AuditLog.log({
+                    userId,
+                    action: 'ARENA_TIMEOUT',
+                    payload: {
+                        sessionIds: sessionsToExpire,
+                        language,
+                        reason: 'cleared_on_new_start'
+                    }
+                });
+            }
+
+            // 2. Handle abandonment of active progress (Apply penalty)
+            if (sessionsToFail.length > 0) {
+                await SuddenDeathSession.updateMany(
+                    { _id: { $in: sessionsToFail } },
+                    { status: 'failed', endTime: new Date(), livesRemaining: 0 }
+                );
+
+                const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+                const pointDeduction = -100;
+
+                await User.updateOne(
+                    { _id: userId, 'progress.language': language },
+                    {
+                        $set: { 'progress.$.arenaLockoutUntil': lockoutUntil },
+                        $inc: {
+                            'stats.totalPoints': pointDeduction,
+                            'progress.$.points': pointDeduction
+                        }
+                    }
+                );
+
+                await AuditLog.log({
+                    userId,
+                    action: 'ARENA_ABANDONED',
+                    payload: {
+                        sessionId: sessionsToFail[0],
+                        language,
+                        lockoutUntil,
+                        pointDeduction
+                    }
+                });
+
+                throw new AuthorizationError(`ARENA PROTOCOL BREACH: System abandoned. Burnout lockout active for 60 minutes.`);
+            }
         }
 
         const session = await SuddenDeathSession.create({
@@ -137,6 +174,16 @@ export async function startSession(req, res, next) {
             timeLimits,
             level: 1,
             status: 'active'
+        });
+
+        await AuditLog.log({
+            userId,
+            action: 'ARENA_START',
+            payload: {
+                sessionId: session._id,
+                language,
+                difficultyRange: '1-30'
+            }
         });
 
         res.status(201).json({
@@ -160,148 +207,160 @@ export async function startSession(req, res, next) {
  * Submit code for an Arena level
  */
 export async function submitArenaCode(req, res, next) {
-    const dbSession = await mongoose.startSession();
-    dbSession.startTransaction();
-
     try {
         const { sessionId, code } = req.body;
         const userId = req.userId;
 
-        const session = await SuddenDeathSession.findOne({ _id: sessionId, userId, status: 'active' }).session(dbSession);
-        if (!session) throw new NotFoundError('Active Arena session');
+        // 1. Initial validation (outside transaction to avoid long locks)
+        const initialSession = await SuddenDeathSession.findOne({ _id: sessionId, userId, status: 'active' });
+        if (!initialSession) throw new NotFoundError('Active Arena session');
 
-        const currentLessonId = session.problemPool[session.currentProblemIndex];
+        const currentLessonId = initialSession.problemPool[initialSession.currentProblemIndex];
         const lesson = await Lesson.findById(currentLessonId);
         if (!lesson) throw new NotFoundError('Lesson');
 
-        // Run code IMMEDIATELY for Arena (high-speed feedback)
-        const result = await executeCode(session.language, code, lesson.getAllTests());
+        // 2. Execute code (Long running - definitely outside transaction)
+        const result = await executeCode(initialSession.language, code, lesson.getAllTests());
 
-        if (result.passed) {
-            // Success - Advance or Win
-            session.currentProblemIndex += 1;
+        // 3. Short-lived transaction for state update
+        const dbSession = await mongoose.startSession();
+        let finalResponseData = null;
 
-            // Calculate new level and part
-            // Level 1: index 0, 1 -> 1/2, 2/2
-            // Level 2: index 2, 3 -> 1/2, 2/2
-            const currentLevel = Math.floor(session.currentProblemIndex / 2) + 1;
-            const currentPart = (session.currentProblemIndex % 2) + 1; // This is actually for the NEXT question
+        try {
+            await dbSession.withTransaction(async () => {
+                // RE-FETCH session inside transaction to ensure it's still active
+                const session = await SuddenDeathSession.findOne({ _id: sessionId, userId, status: 'active' }).session(dbSession);
 
-            session.level = currentLevel;
-            session.score += 200 * (session.level); // Increased scoring for depth
+                if (!session) {
+                    // Session likely timed out or was failed by another process while code was running
+                    // We fetch the current status to return to the user
+                    const currentSession = await SuddenDeathSession.findById(sessionId).session(dbSession);
+                    const user = await User.findById(userId).session(dbSession);
+                    const progress = user.getProgress(initialSession.language);
 
-            let completed = false;
-            let nextLesson = null;
-            let nextTimeLimit = null;
-
-            if (session.currentProblemIndex >= session.problemPool.length) {
-                session.status = 'completed';
-                session.endTime = new Date();
-                completed = true;
-
-                // Award MASSIVE points for 10 consecutive wins
-                // Updated: Sync to both global stats and language-specific progress
-                await User.updateOne(
-                    { _id: userId, 'progress.language': session.language },
-                    {
-                        $inc: {
-                            'stats.totalPoints': 2500,
-                            'stats.totalArenaWins': 1,
-                            'progress.$.points': 2500
+                    finalResponseData = {
+                        success: true,
+                        data: {
+                            passed: false,
+                            death: true,
+                            sessionStatus: currentSession?.status || 'failed',
+                            lockoutUntil: progress.arenaLockoutUntil,
+                            pointDeduction: 0,
+                            result: { error: 'SYSTEM INTERRUPT: Session state changed during execution.' }
                         }
-                    },
-                    { session: dbSession }
-                );
-            } else {
-                nextLesson = await Lesson.findById(session.problemPool[session.currentProblemIndex]);
-                nextTimeLimit = session.timeLimits[session.currentProblemIndex];
-            }
-
-            await session.save({ session: dbSession });
-            await dbSession.commitTransaction();
-
-            // Sync Leaderboard (Move AFTER commit to avoid stale reads)
-            leaderboardService.updateUserRank(userId).catch(err => logger.error('Leaderboard sync failed:', err));
-
-            res.json({
-                success: true,
-                data: {
-                    passed: true,
-                    completed,
-                    sessionStatus: session.status,
-                    level: Math.floor((session.currentProblemIndex - 1) / 2) + 1, // Feedback for level just cleared
-                    part: ((session.currentProblemIndex - 1) % 2) + 1,        // Feedback for part just cleared
-                    nextLevel: Math.floor(session.currentProblemIndex / 2) + 1,
-                    nextPart: (session.currentProblemIndex % 2) + 1,
-                    score: session.score,
-                    nextLesson: nextLesson ? nextLesson.toUserObject() : null,
-                    nextTimeLimit,
-                    result
+                    };
+                    return;
                 }
-            });
-        } else {
-            // FAILURE - DEATH
-            session.status = 'failed';
-            session.endTime = new Date();
-            session.livesRemaining = 0;
-            await session.save({ session: dbSession });
 
-            // APPLY GENTLE PENALTY: 1-hour lockout and point deduction
-            const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-            const pointDeduction = -100;
+                if (result.passed) {
+                    // Success - Advance or Win
+                    session.currentProblemIndex += 1;
+                    const currentLevel = Math.floor(session.currentProblemIndex / 2) + 1;
+                    session.level = currentLevel;
+                    session.score += 200 * (session.level);
 
-            // USE $SET explicitly to ensure it updates
-            await User.updateOne(
-                { _id: userId, 'progress.language': session.language },
-                {
-                    $set: {
-                        'progress.$.arenaLockoutUntil': lockoutUntil,
-                    },
-                    $inc: {
-                        'stats.totalPoints': pointDeduction,
-                        'progress.$.points': pointDeduction
+                    let completed = false;
+                    let nextLesson = null;
+                    let nextTimeLimit = null;
+
+                    if (session.currentProblemIndex >= session.problemPool.length) {
+                        session.status = 'completed';
+                        session.endTime = new Date();
+                        completed = true;
+
+                        await User.updateOne(
+                            { _id: userId, 'progress.language': session.language },
+                            {
+                                $inc: {
+                                    'stats.totalPoints': 2500,
+                                    'stats.totalArenaWins': 1,
+                                    'progress.$.points': 2500
+                                }
+                            },
+                            { session: dbSession }
+                        );
+                    } else {
+                        nextLesson = await Lesson.findById(session.problemPool[session.currentProblemIndex]).session(dbSession);
+                        nextTimeLimit = session.timeLimits[session.currentProblemIndex];
                     }
-                },
-                { session: dbSession }
-            );
 
-            await AuditLog.log({
-                userId,
-                action: 'ARENA_DEATH',
-                payload: {
-                    sessionId: session._id,
-                    language: session.language,
-                    levelReached: session.level,
-                    lockoutUntil,
-                    pointDeduction
-                }
-            }, { session: dbSession });
+                    await session.save({ session: dbSession });
 
-            await dbSession.commitTransaction();
+                    finalResponseData = {
+                        success: true,
+                        data: {
+                            passed: true,
+                            completed,
+                            sessionStatus: session.status,
+                            level: Math.floor((session.currentProblemIndex - 1) / 2) + 1,
+                            part: ((session.currentProblemIndex - 1) % 2) + 1,
+                            nextLevel: Math.floor(session.currentProblemIndex / 2) + 1,
+                            nextPart: (session.currentProblemIndex % 2) + 1,
+                            score: session.score,
+                            nextLesson: nextLesson ? nextLesson.toUserObject() : null,
+                            nextTimeLimit,
+                            result
+                        }
+                    };
+                } else {
+                    // FAILURE - DEATH
+                    session.status = 'failed';
+                    session.endTime = new Date();
+                    session.livesRemaining = 0;
+                    await session.save({ session: dbSession });
 
-            // Log for sanity
-            logger.info(`[ARENA DEATH] User ${userId} lockout until ${lockoutUntil}`);
+                    const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+                    const pointDeduction = -100;
 
-            // Sync Leaderboard (Move AFTER commit)
-            leaderboardService.updateUserRank(userId).catch(err => logger.error('Leaderboard sync failed:', err));
+                    await User.updateOne(
+                        { _id: userId, 'progress.language': session.language },
+                        {
+                            $set: { 'progress.$.arenaLockoutUntil': lockoutUntil },
+                            $inc: {
+                                'stats.totalPoints': pointDeduction,
+                                'progress.$.points': pointDeduction
+                            }
+                        },
+                        { session: dbSession }
+                    );
 
-            res.json({
-                success: true,
-                data: {
-                    passed: false,
-                    death: true,
-                    sessionStatus: 'failed',
-                    lockoutUntil,
-                    pointDeduction,
-                    result
+                    await AuditLog.log({
+                        userId,
+                        action: 'ARENA_DEATH',
+                        payload: {
+                            sessionId: session._id,
+                            language: session.language,
+                            levelReached: session.level,
+                            lockoutUntil,
+                            pointDeduction
+                        }
+                    }, { session: dbSession });
+
+                    finalResponseData = {
+                        success: true,
+                        data: {
+                            passed: false,
+                            death: true,
+                            sessionStatus: 'failed',
+                            lockoutUntil,
+                            pointDeduction,
+                            result
+                        }
+                    };
                 }
             });
+        } finally {
+            dbSession.endSession();
         }
+
+        // Leaderboard sync after success commit
+        if (finalResponseData?.data?.passed || finalResponseData?.data?.death) {
+            leaderboardService.updateUserRank(userId).catch(err => logger.error('Leaderboard sync failed:', err));
+        }
+
+        res.json(finalResponseData);
     } catch (error) {
-        await dbSession.abortTransaction();
         next(error);
-    } finally {
-        dbSession.endSession();
     }
 }
 
@@ -346,72 +405,88 @@ export async function getSessionStatus(req, res, next) {
  * Explicitly fail an Arena session (e.g. timeout)
  */
 export async function failSession(req, res, next) {
-    const dbSession = await mongoose.startSession();
-    dbSession.startTransaction();
-
     try {
         const { sessionId, reason } = req.body;
         const userId = req.userId;
 
-        const session = await SuddenDeathSession.findOne({ _id: sessionId, userId, status: 'active' }).session(dbSession);
-        if (!session) throw new NotFoundError('Active Arena session');
+        const dbSession = await mongoose.startSession();
+        let finalResponseData = null;
 
-        // MARK FAILED
-        session.status = 'failed';
-        session.endTime = new Date();
-        session.livesRemaining = 0;
-        await session.save({ session: dbSession });
+        try {
+            await dbSession.withTransaction(async () => {
+                const session = await SuddenDeathSession.findOne({ _id: sessionId, userId }).session(dbSession);
+                if (!session) throw new NotFoundError('Active Arena session');
 
-        // APPLY PENALTY
-        const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-        const pointDeduction = -100;
-
-        await User.updateOne(
-            { _id: userId, 'progress.language': session.language },
-            {
-                $set: {
-                    'progress.$.arenaLockoutUntil': lockoutUntil,
-                },
-                $inc: {
-                    'stats.totalPoints': pointDeduction,
-                    'progress.$.points': pointDeduction
+                // Idempotency check: If already failed or completed, return current state
+                if (session.status !== 'active') {
+                    const user = await User.findById(userId).session(dbSession);
+                    const progress = user.getProgress(session.language);
+                    finalResponseData = {
+                        success: true,
+                        data: {
+                            status: session.status,
+                            lockoutUntil: progress.arenaLockoutUntil,
+                            pointDeduction: 0
+                        }
+                    };
+                    return;
                 }
-            },
-            { session: dbSession }
-        );
 
-        await AuditLog.log({
-            userId,
-            action: 'ARENA_TIMEOUT',
-            payload: {
-                sessionId: session._id,
-                language: session.language,
-                reason: reason || 'timeout',
-                lockoutUntil,
-                pointDeduction
-            }
-        }, { session: dbSession });
+                // MARK FAILED
+                session.status = 'failed';
+                session.endTime = new Date();
+                session.livesRemaining = 0;
+                await session.save({ session: dbSession });
 
-        await dbSession.commitTransaction();
+                // APPLY PENALTY
+                const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+                const pointDeduction = -100;
 
-        logger.info(`[ARENA FAILURE] User ${userId} failed session ${sessionId} (${reason || 'timeout'})`);
+                await User.updateOne(
+                    { _id: userId, 'progress.language': session.language },
+                    {
+                        $set: { 'progress.$.arenaLockoutUntil': lockoutUntil },
+                        $inc: {
+                            'stats.totalPoints': pointDeduction,
+                            'progress.$.points': pointDeduction
+                        }
+                    },
+                    { session: dbSession }
+                );
 
-        // Sync Leaderboard
-        leaderboardService.updateUserRank(userId).catch(err => logger.error('Leaderboard sync failed:', err));
+                await AuditLog.log({
+                    userId,
+                    action: 'ARENA_TIMEOUT',
+                    payload: {
+                        sessionId: session._id,
+                        language: session.language,
+                        reason: reason || 'timeout',
+                        lockoutUntil,
+                        pointDeduction
+                    }
+                }, { session: dbSession });
 
-        res.json({
-            success: true,
-            data: {
-                status: 'failed',
-                lockoutUntil,
-                pointDeduction
-            }
-        });
+                finalResponseData = {
+                    success: true,
+                    data: {
+                        status: 'failed',
+                        lockoutUntil,
+                        pointDeduction
+                    }
+                };
+            });
+        } finally {
+            dbSession.endSession();
+        }
+
+        // Sync Leaderboard after success commit
+        if (finalResponseData?.data?.status === 'failed') {
+            leaderboardService.updateUserRank(userId).catch(err => logger.error('Leaderboard sync failed:', err));
+        }
+
+        res.json(finalResponseData);
     } catch (error) {
-        await dbSession.abortTransaction();
         next(error);
-    } finally {
-        dbSession.endSession();
     }
 }
 

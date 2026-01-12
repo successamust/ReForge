@@ -110,7 +110,7 @@ const PracticePage = () => {
         }
     }, [output]);
 
-    const highlightCode = (code) => {
+    const highlightCode = (code, lang) => {
         if (!code) return '';
 
         // Escape HTML
@@ -122,11 +122,17 @@ const PracticePage = () => {
         const keywords = [
             'function', 'const', 'let', 'var', 'return', 'if', 'else', 'for', 'while',
             'import', 'export', 'await', 'async', 'try', 'catch', 'new', 'class',
-            'extends', 'super', 'switch', 'case', 'break', 'default', 'true', 'false', 'null'
+            'extends', 'super', 'switch', 'case', 'break', 'default', 'true', 'false', 'null',
+            'def', 'elif', 'lambda', 'with', 'yield', 'pass', 'func', 'package', 'type',
+            'interface', 'struct', 'chan', 'go', 'select', 'using', 'namespace', 'public',
+            'private', 'protected', 'internal', 'static', 'readonly', 'void', 'bool',
+            'string', 'int', 'float', 'double', 'decimal'
         ];
 
+        const commentRegex = lang === 'python' ? `(#.*$)` : `(\\/\\/.*$|\\/\\*[\\s\\S]*?\\*\\/)`;
+
         const regex = new RegExp(
-            `(\\/\\/.*$|\\/\\*[\\s\\S]*?\\*\\/)|` +
+            `${commentRegex}|` +
             `(".*?"|'.*?'|\`.*?\`)|` +
             `\\b(${keywords.join('|')})\\b|` +
             `(\\b\\d+\\b)`,
@@ -158,25 +164,46 @@ const PracticePage = () => {
 
         if (key === '/' && (metaKey || ctrlKey)) {
             e.preventDefault();
-            const before = value.substring(0, selectionStart);
-            const after = value.substring(selectionStart);
-            const lineStart = before.lastIndexOf('\n') + 1;
-            const lineEndRaw = after.indexOf('\n');
-            const lineEnd = lineEndRaw === -1 ? value.length : selectionStart + lineEndRaw;
-            const line = value.substring(lineStart, lineEnd);
-            let newLine;
-            let offset;
-            if (line.trim().startsWith('//')) {
-                newLine = line.replace(/(\s*)\/\/\s?/, '$1');
-                offset = newLine.length - line.length;
-            } else {
-                newLine = '// ' + line;
-                offset = 3;
-            }
-            const newValue = value.substring(0, lineStart) + newLine + value.substring(lineEnd);
+            const prefix = language === 'python' ? '#' : '//';
+
+            // Get all lines that are at least partially selected
+            const startPos = Math.min(selectionStart, selectionEnd);
+            const endPos = Math.max(selectionStart, selectionEnd);
+
+            const before = value.substring(0, startPos);
+            const after = value.substring(endPos);
+
+            const selectionBefore = before.lastIndexOf('\n') + 1;
+            let selectionAfter = value.indexOf('\n', endPos);
+            if (selectionAfter === -1) selectionAfter = value.length;
+
+            const selectedText = value.substring(selectionBefore, selectionAfter);
+            const lines = selectedText.split('\n');
+            const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const prefixRegex = new RegExp(`^(\\s*)${escapedPrefix}\\s?`);
+
+            // Determine if we should comment or uncomment
+            const allComments = lines.every(line => !line.trim() || line.trim().startsWith(prefix));
+            const shouldUncomment = allComments;
+
+            const transformedLines = lines.map(line => {
+                if (!line.trim()) return line;
+                if (shouldUncomment) {
+                    return line.replace(prefixRegex, '$1');
+                } else {
+                    return prefix + ' ' + line;
+                }
+            });
+
+            const newText = transformedLines.join('\n');
+            const newValue = value.substring(0, selectionBefore) + newText + after;
+
             setCode(newValue);
+
+            // Adjust selection range
             setTimeout(() => {
-                target.setSelectionRange(selectionStart + offset, selectionEnd + offset);
+                const diff = newText.length - selectedText.length;
+                target.setSelectionRange(startPos, endPos + diff);
             }, 0);
             return;
         }
@@ -306,7 +333,7 @@ const PracticePage = () => {
                                         <div
                                             ref={backdropRef}
                                             className="editor-layer editor-backdrop"
-                                            dangerouslySetInnerHTML={{ __html: highlightCode(code) + '\n ' }}
+                                            dangerouslySetInnerHTML={{ __html: highlightCode(code, language) + '\n ' }}
                                         />
 
                                         {/* Hidden Textarea for Input */}

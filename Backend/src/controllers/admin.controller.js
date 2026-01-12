@@ -596,3 +596,38 @@ export async function getSubmissionCode(req, res, next) {
         next(error);
     }
 }
+
+/**
+ * Reset Arena lockout for a user across all languages
+ */
+export async function resetArenaLockout(req, res, next) {
+    try {
+        const { id } = req.params;
+        const adminId = req.userId;
+
+        const user = await User.findById(id);
+        if (!user) {
+            throw new NotFoundError('User');
+        }
+
+        // Clear lockout in all progress entries
+        await User.updateOne(
+            { _id: id },
+            { $set: { 'progress.$[].arenaLockoutUntil': null } }
+        );
+
+        await AuditLog.log({
+            userId: adminId,
+            action: 'ADMIN_LOCKOUT_RESET',
+            payload: { targetUserId: id },
+            createdBy: adminId,
+        });
+
+        res.json({
+            success: true,
+            message: 'Arena lockouts cleared successfully.',
+        });
+    } catch (error) {
+        next(error);
+    }
+}

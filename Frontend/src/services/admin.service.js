@@ -42,5 +42,9 @@ export const adminService = {
 
     async getSubmissionCode(id) {
         return api.get(`/admin/submissions/${id}/code`);
+    },
+
+    async resetArenaLockout(id) {
+        return api.put(`/admin/users/${id}/reset-lockout`);
     }
 };

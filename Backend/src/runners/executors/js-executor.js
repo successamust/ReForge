@@ -11,6 +11,30 @@ const payload = JSON.parse(
 
 const { code, tests, operation } = payload;
 
+/**
+ * Deep equality helper that handles undefined, null, and objects
+ */
+function deepEqual(actual, expected) {
+    if (actual === expected) return true;
+
+    if (actual && expected && typeof actual === 'object' && typeof expected === 'object') {
+        if (Array.isArray(actual) !== Array.isArray(expected)) return false;
+
+        const actualKeys = Object.keys(actual);
+        const expectedKeys = Object.keys(expected);
+
+        // Include keys with undefined values in the check
+        const allKeys = new Set([...actualKeys, ...expectedKeys]);
+
+        for (const key of allKeys) {
+            if (!deepEqual(actual[key], expected[key])) return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
 async function runTests() {
     if (operation === 'lint') {
         try {
@@ -135,7 +159,7 @@ async function runSingleTest(test) {
         ]);
 
         // Compare result with expected output
-        const passed = JSON.stringify(result) === JSON.stringify(expectedOutput);
+        const passed = deepEqual(result, expectedOutput);
 
         return {
             testId: id,

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { adminService } from '../services/admin.service';
+import { AppContext } from '../context/AppContext';
 import Button from '../components/ui/Button';
 
 const AdminUsersPage = () => {
+    const { addNotification } = useContext(AppContext);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -12,6 +14,7 @@ const AdminUsersPage = () => {
     const [pagination, setPagination] = useState({});
     const [editingUser, setEditingUser] = useState(null);
     const [editForm, setEditForm] = useState({ role: '', isActive: true });
+    const [confirmReset, setConfirmReset] = useState(false);
 
     const loadUsers = React.useCallback(async () => {
         try {
@@ -50,6 +53,24 @@ const AdminUsersPage = () => {
             loadUsers(); // Reload users
         } catch (err) {
             console.error('Failed to update user', err);
+        }
+    };
+
+    const handleResetLockout = async () => {
+        try {
+            await adminService.resetArenaLockout(editingUser._id);
+            addNotification({
+                type: 'success',
+                message: 'Arena lockouts cleared successfully.'
+            });
+            setConfirmReset(false);
+            loadUsers(); // Refresh list to clear burnout badges
+        } catch (err) {
+            console.error('Failed to reset lockout', err);
+            addNotification({
+                type: 'error',
+                message: err.response?.data?.error?.message || 'Failed to reset lockout.'
+            });
         }
     };
 
@@ -94,7 +115,14 @@ const AdminUsersPage = () => {
                         users.map(user => (
                             <div key={user._id} className="grid grid-cols-12 px-6 py-4 border-b border-white/10 items-center hover:bg-white/[0.02] transition-colors">
                                 <div className="col-span-4">
-                                    <div className="text-white font-bold">{user.firstName} {user.lastName}</div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-white font-bold">{user.firstName} {user.lastName}</div>
+                                        {user.progress?.some(p => p.arenaLockoutUntil && new Date(p.arenaLockoutUntil) > new Date()) && (
+                                            <span className="px-1.5 py-0.5 bg-red-600 text-[8px] font-black text-white uppercase tracking-tighter animate-pulse">
+                                                Burnout
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="text-white/40 text-sm font-light">{user.email}</div>
                                 </div>
                                 <div className="col-span-2">
@@ -188,6 +216,38 @@ const AdminUsersPage = () => {
                                         <option value="false" className="bg-black text-white font-mono uppercase">Banned</option>
                                     </select>
                                 </div>
+                                <div className="pt-4 border-t border-white/5">
+                                    <label className="block text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Arena Intervention</label>
+
+                                    {/* Active Lockouts Display */}
+                                    {editingUser.progress?.filter(p => p.arenaLockoutUntil && new Date(p.arenaLockoutUntil) > new Date()).length > 0 ? (
+                                        <div className="mb-4 space-y-2">
+                                            <div className="text-[10px] text-red-500 font-bold uppercase mb-1">Active Lockouts:</div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {editingUser.progress
+                                                    .filter(p => p.arenaLockoutUntil && new Date(p.arenaLockoutUntil) > new Date())
+                                                    .map(p => (
+                                                        <span key={p.language} className="px-2 py-1 bg-red-600/20 border border-red-600/30 text-[10px] text-red-400 font-bold uppercase tracking-tighter">
+                                                            {p.language}: {Math.ceil((new Date(p.arenaLockoutUntil) - new Date()) / 60000)}m
+                                                        </span>
+                                                    ))
+                                                }
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="mb-4 text-[10px] text-white/30 uppercase italic tracking-widest">
+                                            No active system burnouts detected.
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={() => setConfirmReset(true)}
+                                        className="w-full py-3 bg-red-600/10 border border-red-600/30 text-red-500 font-black text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all cursor-pointer"
+                                    >
+                                        Manual Lockout Reset
+                                    </button>
+                                    <p className="mt-2 text-[10px] text-white/20 italic">Clears burnout across all languages.</p>
+                                </div>
                             </div>
                             <div className="flex gap-4">
                                 <Button onClick={handleSaveEdit} className="flex-1">Save Changes</Button>
@@ -196,6 +256,52 @@ const AdminUsersPage = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Custom Reset Confirmation Modal */}
+                <AnimatePresence>
+                    {confirmReset && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[60]"
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                                exit={{ scale: 0.9, y: 20 }}
+                                className="bg-black border border-red-500/30 p-8 max-w-sm w-full mx-4 text-center relative overflow-hidden"
+                            >
+                                {/* Industrial background detail */}
+                                <div className="absolute top-0 left-0 w-full h-1 bg-red-600/50 animate-pulse" />
+
+                                <div className="text-red-500 mb-4 flex justify-center">
+                                    <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">Initialize Override?</h3>
+                                <p className="text-white/40 text-xs mb-8 uppercase tracking-wide leading-relaxed">
+                                    WARNING: This will immediately clear all Arena burnouts (lockouts) for user: <span className="text-white/80">{editingUser.email}</span>.
+                                </p>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={handleResetLockout}
+                                        className="flex-1 py-3 bg-red-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-red-500 transition-all"
+                                    >
+                                        Confirm
+                                    </button>
+                                    <button
+                                        onClick={() => setConfirmReset(false)}
+                                        className="flex-1 py-3 border border-white/10 text-white/40 font-black text-[10px] uppercase tracking-widest hover:border-white/30 hover:text-white transition-all"
+                                    >
+                                        Abort
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

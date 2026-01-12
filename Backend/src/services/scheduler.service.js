@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { User } from '../models/index.js';
+import { User, SuddenDeathSession } from '../models/index.js';
 import * as progressService from './progress.service.js';
 import { relapseService } from './relapse.service.js';
 import { hasCalendarDayWindowExpired, hasInactivityWindowExpired } from '../utils/timezone.js';
@@ -7,6 +7,29 @@ import config from '../config/index.js';
 import logger from '../utils/logger.js';
 
 let isRunning = false;
+
+/**
+ * Mark old active Arena sessions as expired
+ */
+async function cleanupExpiredArenaSessions() {
+    try {
+        const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+        const expiredSessions = await SuddenDeathSession.find({
+            status: 'active',
+            startTime: { $lt: twoHoursAgo }
+        });
+
+        if (expiredSessions.length > 0) {
+            await SuddenDeathSession.updateMany(
+                { _id: { $in: expiredSessions.map(s => s._id) } },
+                { status: 'expired', endTime: new Date() }
+            );
+            logger.info(`Scheduler: Cleaned up ${expiredSessions.length} expired Arena sessions`);
+        }
+    } catch (error) {
+        logger.error('Scheduler: Arena cleanup failed:', error);
+    }
+}
 
 /**
  * Find users with expired failure windows and apply rollback
@@ -18,6 +41,10 @@ export async function processExpiredWindows() {
     }
 
     isRunning = true;
+
+    // Clean up Arena sessions first
+    await cleanupExpiredArenaSessions();
+
     const results = {
         processed: 0,
         rollbacks: 0,
