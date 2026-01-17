@@ -518,9 +518,9 @@ for name, age in zip(names, ages):
         ],
         exercise: { description: 'Return dict with sum, count, average, min, max of number list.', starterCode: `def solution(numbers):\n    pass`, hints: ['Use sum(), len(), min(), max()'] },
         tests: [
-            { id: 't1', description: 'Basic stats', input: [1, 2, 3, 4, 5], expectedOutput: { sum: 15, count: 5, average: 3, min: 1, max: 5 }, isHidden: false },
-            { id: 't2', description: 'Single', input: [42], expectedOutput: { sum: 42, count: 1, average: 42, min: 42, max: 42 }, isHidden: false },
-            { id: 't3', description: 'Negative', input: [-5, 0, 5], expectedOutput: { sum: 0, count: 3, average: 0, min: -5, max: 5 }, isHidden: true }
+            { id: 't1', description: 'Basic stats', input: [[1, 2, 3, 4, 5]], expectedOutput: { sum: 15, count: 5, average: 3, min: 1, max: 5 }, isHidden: false },
+            { id: 't2', description: 'Single', input: [[42]], expectedOutput: { sum: 42, count: 1, average: 42, min: 42, max: 42 }, isHidden: false },
+            { id: 't3', description: 'Negative', input: [[-5, 0, 5]], expectedOutput: { sum: 0, count: 3, average: 0, min: -5, max: 5 }, isHidden: true }
         ],
         solution: `def solution(numbers):\n    return {"sum": sum(numbers), "count": len(numbers), "average": sum(numbers)/len(numbers), "min": min(numbers), "max": max(numbers)}`
     },

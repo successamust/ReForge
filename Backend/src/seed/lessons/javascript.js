@@ -154,7 +154,7 @@ console.log(typeof isStudent); // "boolean"`,
       { id: 'test-3', description: 'Should return correct type for boolean', input: true, expectedOutput: { value: true, type: 'boolean' }, isHidden: false },
       { id: 'test-4', description: 'Should handle null', input: null, expectedOutput: { value: null, type: 'object' }, isHidden: true, hint: 'typeof null returns "object" in JavaScript' },
       { id: 'test-5', description: 'Should handle undefined', input: undefined, expectedOutput: { value: undefined, type: 'undefined' }, isHidden: true },
-      { id: 'test-6', description: 'Should handle array', input: [1, 2, 3], expectedOutput: { value: [1, 2, 3], type: 'object' }, isHidden: true }
+      { id: 'test-6', description: 'Should handle array', input: [[1, 2, 3]], expectedOutput: { value: [1, 2, 3], type: 'object' }, isHidden: true }
     ],
     solution: `function solution(input) {
   return {
@@ -502,11 +502,11 @@ console.log(fruits.includes("cherry")); // true`,
       hints: ['Use reduce for sum', 'Use Math.min/max with spread', 'Average = sum / count']
     },
     tests: [
-      { id: 'test-1', description: 'Basic stats', input: [1, 2, 3, 4, 5], expectedOutput: { sum: 15, count: 5, average: 3, min: 1, max: 5 }, isHidden: false },
-      { id: 'test-2', description: 'Single element', input: [42], expectedOutput: { sum: 42, count: 1, average: 42, min: 42, max: 42 }, isHidden: false },
-      { id: 'test-3', description: 'Negative numbers', input: [-5, -2, 0, 3, 10], expectedOutput: { sum: 6, count: 5, average: 1.2, min: -5, max: 10 }, isHidden: false },
-      { id: 'test-4', description: 'All same', input: [5, 5, 5, 5], expectedOutput: { sum: 20, count: 4, average: 5, min: 5, max: 5 }, isHidden: true },
-      { id: 'test-5', description: 'Decimals', input: [1.5, 2.5, 3.0], expectedOutput: { sum: 7, count: 3, average: 7 / 3, min: 1.5, max: 3.0 }, isHidden: true }
+      { id: 'test-1', description: 'Basic stats', input: [[1, 2, 3, 4, 5]], expectedOutput: { sum: 15, count: 5, average: 3, min: 1, max: 5 }, isHidden: false },
+      { id: 'test-2', description: 'Single element', input: [[42]], expectedOutput: { sum: 42, count: 1, average: 42, min: 42, max: 42 }, isHidden: false },
+      { id: 'test-3', description: 'Negative numbers', input: [[-5, -2, 0, 3, 10]], expectedOutput: { sum: 6, count: 5, average: 1.2, min: -5, max: 10 }, isHidden: false },
+      { id: 'test-4', description: 'All same', input: [[5, 5, 5, 5]], expectedOutput: { sum: 20, count: 4, average: 5, min: 5, max: 5 }, isHidden: true },
+      { id: 'test-5', description: 'Decimals', input: [[1.5, 2.5, 3.0]], expectedOutput: { sum: 7, count: 3, average: 7 / 3, min: 1.5, max: 3.0 }, isHidden: true }
     ],
     solution: `function solution(numbers) {
   const sum = numbers.reduce((a, b) => a + b, 0);
@@ -728,6 +728,7 @@ console.log(name); // "Alice"`,
       { id: 'test-5', description: 'Numeric strings', input: { x: '10', y: '20' }, expectedOutput: { 10: 'x', 20: 'y' }, isHidden: true }
     ],
     solution: `function solution(obj) {
+  if (!obj) return {};
   const swapped = {};
   for (const [key, value] of Object.entries(obj)) {
     swapped[value] = key;
@@ -937,11 +938,11 @@ console.log(total); // 300`,
       hints: ['Calculate average with reduce', 'Filter above average', 'Map to names']
     },
     tests: [
-      { id: 'test-1', description: 'Above average sorted', input: [{ name: 'Alice', score: 90 }, { name: 'Bob', score: 70 }, { name: 'Charlie', score: 80 }, { name: 'David', score: 60 }], expectedOutput: ['Alice', 'Charlie'], isHidden: false },
-      { id: 'test-2', description: 'Single person', input: [{ name: 'Alice', score: 100 }], expectedOutput: [], isHidden: false },
-      { id: 'test-3', description: 'Sort alphabetically', input: [{ name: 'Zoe', score: 100 }, { name: 'Alice', score: 100 }, { name: 'Mike', score: 50 }], expectedOutput: ['Alice', 'Zoe'], isHidden: false },
-      { id: 'test-4', description: 'All same scores', input: [{ name: 'A', score: 80 }, { name: 'B', score: 80 }], expectedOutput: [], isHidden: true },
-      { id: 'test-5', description: 'Empty array', input: [], expectedOutput: [], isHidden: true }
+      { id: 'test-1', description: 'Above average sorted', input: [[{ name: 'Alice', score: 90 }, { name: 'Bob', score: 70 }, { name: 'Charlie', score: 80 }, { name: 'David', score: 60 }]], expectedOutput: ['Alice', 'Charlie'], isHidden: false },
+      { id: 'test-2', description: 'Single person', input: [[{ name: 'Alice', score: 100 }]], expectedOutput: [], isHidden: false },
+      { id: 'test-3', description: 'Sort alphabetically', input: [[{ name: 'Zoe', score: 100 }, { name: 'Alice', score: 100 }, { name: 'Mike', score: 50 }]], expectedOutput: ['Alice', 'Zoe'], isHidden: false },
+      { id: 'test-4', description: 'All same scores', input: [[{ name: 'A', score: 80 }, { name: 'B', score: 80 }]], expectedOutput: [], isHidden: true },
+      { id: 'test-5', description: 'Empty array', input: [[]], expectedOutput: [], isHidden: true }
     ],
     solution: `function solution(people) {
   if (people.length === 0) return [];

@@ -138,7 +138,7 @@ export async function startSession(req, res, next) {
                     { status: 'failed', endTime: new Date(), livesRemaining: 0 }
                 );
 
-                const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+                const lockoutUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
                 const pointDeduction = -100;
 
                 await User.updateOne(
@@ -163,7 +163,7 @@ export async function startSession(req, res, next) {
                     }
                 });
 
-                throw new AuthorizationError(`ARENA PROTOCOL BREACH: System abandoned. Burnout lockout active for 60 minutes.`);
+                throw new AuthorizationError(`ARENA PROTOCOL BREACH: System abandoned. Burnout lockout active for 15 minutes.`);
             }
         }
 
@@ -195,7 +195,8 @@ export async function startSession(req, res, next) {
                 totalParts: 2,
                 totalLevels: 5,
                 lesson: orderedLessons[0].toUserObject(),
-                timeLimit: timeLimits[0]
+                timeLimit: timeLimits[0],
+                livesRemaining: session.livesRemaining
             }
         });
     } catch (error) {
@@ -303,50 +304,68 @@ export async function submitArenaCode(req, res, next) {
                         }
                     };
                 } else {
-                    // FAILURE - DEATH
-                    session.status = 'failed';
-                    session.endTime = new Date();
-                    session.livesRemaining = 0;
-                    await session.save({ session: dbSession });
+                    // FAILURE
+                    // Check if we have lives remaining
+                    if (session.livesRemaining > 1) {
+                        // JUST A FLESH WOUND
+                        session.livesRemaining -= 1;
+                        await session.save({ session: dbSession });
 
-                    const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-                    const pointDeduction = -100;
-
-                    await User.updateOne(
-                        { _id: userId, 'progress.language': session.language },
-                        {
-                            $set: { 'progress.$.arenaLockoutUntil': lockoutUntil },
-                            $inc: {
-                                'stats.totalPoints': pointDeduction,
-                                'progress.$.points': pointDeduction
+                        finalResponseData = {
+                            success: true,
+                            data: {
+                                passed: false,
+                                death: false,
+                                livesRemaining: session.livesRemaining,
+                                result
                             }
-                        },
-                        { session: dbSession }
-                    );
+                        };
+                    } else {
+                        // FINAL DEATH
+                        session.status = 'failed';
+                        session.endTime = new Date();
+                        session.livesRemaining = 0;
+                        await session.save({ session: dbSession });
 
-                    await AuditLog.log({
-                        userId,
-                        action: 'ARENA_DEATH',
-                        payload: {
-                            sessionId: session._id,
-                            language: session.language,
-                            levelReached: session.level,
-                            lockoutUntil,
-                            pointDeduction
-                        }
-                    }, { session: dbSession });
+                        const lockoutUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+                        const pointDeduction = -100;
 
-                    finalResponseData = {
-                        success: true,
-                        data: {
-                            passed: false,
-                            death: true,
-                            sessionStatus: 'failed',
-                            lockoutUntil,
-                            pointDeduction,
-                            result
-                        }
-                    };
+                        await User.updateOne(
+                            { _id: userId, 'progress.language': session.language },
+                            {
+                                $set: { 'progress.$.arenaLockoutUntil': lockoutUntil },
+                                $inc: {
+                                    'stats.totalPoints': pointDeduction,
+                                    'progress.$.points': pointDeduction
+                                }
+                            },
+                            { session: dbSession }
+                        );
+
+                        await AuditLog.log({
+                            userId,
+                            action: 'ARENA_DEATH',
+                            payload: {
+                                sessionId: session._id,
+                                language: session.language,
+                                levelReached: session.level,
+                                lockoutUntil,
+                                pointDeduction
+                            }
+                        }, { session: dbSession });
+
+                        finalResponseData = {
+                            success: true,
+                            data: {
+                                passed: false,
+                                death: true,
+                                sessionStatus: 'failed',
+                                lockoutUntil,
+                                pointDeduction,
+                                result
+                            }
+                        };
+                    }
                 }
             });
         } finally {
@@ -392,8 +411,10 @@ export async function getSessionStatus(req, res, next) {
                 totalLevels: 5,
                 language: session.language,
                 lesson: currentLesson.toUserObject(),
+                lesson: currentLesson.toUserObject(),
                 timeLimit: session.timeLimits[session.currentProblemIndex],
-                lockoutUntil: progress.arenaLockoutUntil
+                lockoutUntil: progress.arenaLockoutUntil,
+                livesRemaining: session.livesRemaining
             }
         });
     } catch (error) {
@@ -439,7 +460,7 @@ export async function failSession(req, res, next) {
                 await session.save({ session: dbSession });
 
                 // APPLY PENALTY
-                const lockoutUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+                const lockoutUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
                 const pointDeduction = -100;
 
                 await User.updateOne(

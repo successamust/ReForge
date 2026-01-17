@@ -29,7 +29,7 @@ const testSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
-}, { _id: false });
+}, { _id: false, minimize: false });
 
 const exampleSchema = new mongoose.Schema({
     title: {
@@ -44,7 +44,7 @@ const exampleSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-}, { _id: false });
+}, { _id: false, minimize: false });
 
 const exerciseSchema = new mongoose.Schema({
     description: {
@@ -60,7 +60,7 @@ const exerciseSchema = new mongoose.Schema({
         default: [],
         validate: [v => v.length <= 3, 'Maximum 3 hints allowed'],
     },
-}, { _id: false });
+}, { _id: false, minimize: false });
 
 const lessonSchema = new mongoose.Schema({
     language: {
@@ -135,6 +135,7 @@ const lessonSchema = new mongoose.Schema({
     },
 }, {
     timestamps: true,
+    minimize: false,
 });
 
 // Compound unique index for language + day

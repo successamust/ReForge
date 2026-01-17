@@ -16,31 +16,27 @@ async function seed() {
         // Connect to database
         await connectDatabase();
 
-        // Clear existing data (only in development)
-        if (config.env === 'development') {
-            logger.info('Clearing existing data...');
-            await User.deleteMany({});
-            await Lesson.deleteMany({});
-        }
-
-
-        // Seed lessons for all languages
+        // Seed lessons for all languages (using upsert now, so no need to wipe)
         logger.info('Seeding lessons...');
         for (const language of config.supportedLanguages) {
             logger.info(`Seeding ${language} lessons...`);
             const lessons = getLessonsForLanguage(language);
 
             for (const lessonData of lessons) {
-                const existingLesson = await Lesson.findOne({
-                    language: lessonData.language,
-                    day: lessonData.day,
-                });
-
-                if (!existingLesson) {
-                    const lesson = new Lesson(lessonData);
-                    await lesson.save();
-                    logger.debug(`Created lesson: ${language} day ${lessonData.day}`);
-                }
+                // Use upsert to update existing lessons or create new ones
+                await Lesson.findOneAndUpdate(
+                    {
+                        language: lessonData.language,
+                        day: lessonData.day,
+                    },
+                    lessonData,
+                    {
+                        upsert: true,
+                        new: true,
+                        runValidators: true,
+                    }
+                );
+                logger.debug(`Synced lesson: ${language} day ${lessonData.day}`);
             }
             logger.info(`Seeded ${lessons.length} ${language} lessons`);
         }

@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import arenaService from '../services/arena.service';
 import Button from '../components/ui/Button';
 import ArenaTimer from '../components/ui/ArenaTimer';
-import { Processor, CodeFile, Skull, Activity, ShieldAlert, Zap } from '../components/icons/CustomIcons';
+import { Processor, CodeFile, Skull, Activity, ShieldAlert, Zap, Heart } from '../components/icons/CustomIcons';
 import { telemetryService } from '../services/TelemetryService';
 import CyberBackground from '../components/arena/CyberBackground';
+import useUndoRedo from '../hooks/useUndoRedo';
 
 const ArenaPage = () => {
     const navigate = useNavigate();
@@ -15,7 +18,8 @@ const ArenaPage = () => {
 
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [code, setCode] = useState('');
+    const [editorState, setEditorState, undo, redo] = useUndoRedo({ value: '', selection: 0 });
+    const code = editorState.value;
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isStarting, setIsStarting] = useState(null);
     const [output, setOutput] = useState([]);
@@ -32,6 +36,14 @@ const ArenaPage = () => {
     const lineNumbersRef = useRef(null);
     const sessionRef = useRef(null);
     const sessionActiveRef = useRef(false);
+    const textareaRef = useRef(null);
+
+    useLayoutEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.setSelectionRange(editorState.selection, editorState.selection);
+        }
+    }, [editorState]);
+
     const [shake, setShake] = useState(false);
 
     const levels = [1, 2, 3, 4, 5];
@@ -51,7 +63,7 @@ const ArenaPage = () => {
 
         const mins = Math.floor(diff / 60000);
         const secs = Math.floor((diff % 60000) / 1000);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+        return `${mins}:${secs.toString().padStart(2, '0')} `;
     };
 
     const triggerArenaTimeout = useCallback(async () => {
@@ -185,23 +197,6 @@ const ArenaPage = () => {
         }
     }, [output]);
 
-    const highlightCode = (code, lang) => {
-        if (!code) return '';
-        let escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const keywords = ['function', 'const', 'let', 'var', 'return', 'if', 'else', 'for', 'while', 'import', 'export', 'await', 'async', 'try', 'catch', 'new', 'class', 'extends', 'super', 'switch', 'case', 'break', 'default', 'true', 'false', 'null', 'def', 'def', 'elif', 'lambda', 'with', 'yield', 'pass', 'async', 'await', 'func', 'package', 'type', 'interface', 'struct', 'chan', 'go', 'select', 'using', 'namespace', 'public', 'private', 'protected', 'internal', 'static', 'readonly', 'void', 'bool', 'string', 'int', 'float', 'double', 'decimal'];
-
-        // Language-specific comment regex
-        const commentRegex = lang === 'python' ? `(#.*$)` : `(\\/\\/.*$|\\/\\*[\\s\\S]*?\\*\\/)`;
-
-        const regex = new RegExp(`${commentRegex}|(".*?"|'.*?'|\`.*?\`)|\\b(${keywords.join('|')})\\b|(\\b\\d+\\b)`, 'gm');
-        return escaped.replace(regex, (match, p1, p2, p3, p4) => {
-            if (p1) return `<span style="color: rgba(255,255,255,0.3); font-style: italic;">${p1}</span>`;
-            if (p2) return `<span style="color: #4ade80;">${p2}</span>`;
-            if (p3) return `<span style="color: #A855F7; font-weight: bold;">${p3}</span>`;
-            if (p4) return `<span style="color: #60a5fa;">${p4}</span>`;
-            return match;
-        });
-    };
 
     const handleScroll = (e) => {
         if (backdropRef.current) {
@@ -215,6 +210,18 @@ const ArenaPage = () => {
 
     const handleKeyDown = (e) => {
         const { key, target, metaKey, ctrlKey } = e;
+        if ((metaKey || ctrlKey) && !e.shiftKey && key === 'z') {
+            e.preventDefault();
+            undo();
+            return;
+        }
+
+        if ((metaKey || ctrlKey) && e.shiftKey && key === 'z') {
+            e.preventDefault();
+            redo();
+            return;
+        }
+
         const { selectionStart, selectionEnd, value } = target;
 
         if (key === '/' && (metaKey || ctrlKey)) {
@@ -236,7 +243,7 @@ const ArenaPage = () => {
             const selectedText = value.substring(selectionBefore, selectionAfter);
             const lines = selectedText.split('\n');
             const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const prefixRegex = new RegExp(`^(\\s*)${escapedPrefix}\\s?`);
+            const prefixRegex = new RegExp(`^ (\\s *)${escapedPrefix} \\s ? `);
 
             // Determine if we should comment or uncomment
             // If any line is NOT a comment, we comment all lines
@@ -255,21 +262,15 @@ const ArenaPage = () => {
             const newText = transformedLines.join('\n');
             const newValue = value.substring(0, selectionBefore) + newText + after;
 
-            setCode(newValue);
-
-            // Adjust selection range
-            setTimeout(() => {
-                const diff = newText.length - selectedText.length;
-                target.setSelectionRange(startPos, endPos + diff);
-            }, 0);
+            const diff = newText.length - selectedText.length;
+            setEditorState({ value: newValue, selection: endPos + diff });
             return;
         }
 
         if (key === 'Tab') {
             e.preventDefault();
             const newValue = value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
-            setCode(newValue);
-            setTimeout(() => { target.setSelectionRange(selectionStart + 2, selectionStart + 2); }, 0);
+            setEditorState({ value: newValue, selection: selectionStart + 2 });
         }
 
         if (key === 'Enter') {
@@ -277,24 +278,91 @@ const ArenaPage = () => {
             const linesBefore = value.substring(0, selectionStart).split('\n');
             const currentLine = linesBefore[linesBefore.length - 1];
             const indent = currentLine.match(/^\s*/)?.[0] || '';
+            const charBefore = value.charAt(selectionStart - 1);
+            const charAfter = value.charAt(selectionStart);
+
+            // Smart Enter between brackets: {|} -> Enter -> {\n  |\n}
+            if ((charBefore === '{' && charAfter === '}') ||
+                (charBefore === '[' && charAfter === ']') ||
+                (charBefore === '(' && charAfter === ')')) {
+                const extraIndent = '  ';
+                const insertion = '\n' + indent + extraIndent + '\n' + indent;
+                const newValue = value.substring(0, selectionStart) + insertion + value.substring(selectionEnd);
+                const cursorPosition = selectionStart + 1 + indent.length + extraIndent.length;
+                setEditorState({ value: newValue, selection: cursorPosition });
+                return;
+            }
+
+            // Normal Enter with auto-indent
             let extraIndent = '';
-            if (currentLine.trim().endsWith('{') || currentLine.trim().endsWith('(') || currentLine.trim().endsWith('[')) {
+            // If the previous line actually ends with an opener (ignoring whitespace), increase indent
+            // We use trimRight() to ignore trailing spaces
+            const trimmedLine = currentLine.trimEnd();
+            if (trimmedLine.endsWith('{') || trimmedLine.endsWith('(') || trimmedLine.endsWith('[')) {
                 extraIndent = '  ';
             }
+
             const insertion = '\n' + indent + extraIndent;
             const newValue = value.substring(0, selectionStart) + insertion + value.substring(selectionEnd);
-            setCode(newValue);
-            setTimeout(() => { target.setSelectionRange(selectionStart + insertion.length, selectionStart + insertion.length); }, 0);
+            setEditorState({ value: newValue, selection: selectionStart + insertion.length });
+        }
+
+        if (key === '}') {
+            const linesBefore = value.substring(0, selectionStart).split('\n');
+            const currentLineBeforeCursor = linesBefore[linesBefore.length - 1];
+
+            // Only smart dedent if we are currently just indentation (whitespace)
+            if (/^\s*$/.test(currentLineBeforeCursor)) {
+                // Find matching opener to steal its indentation
+                let stack = 0;
+                let openerIndent = null;
+
+                // backwards scan lines
+                for (let i = linesBefore.length - 2; i >= 0; i--) {
+                    const line = linesBefore[i];
+                    // Naive brace counting - good enough for simple indentation syncing
+                    const openCount = (line.match(/\{/g) || []).length;
+                    const closeCount = (line.match(/\}/g) || []).length;
+
+                    stack += (closeCount - openCount);
+
+                    if (stack < 0) {
+                        // Found our logical opener
+                        openerIndent = line.match(/^\s*/)?.[0] || '';
+                        break;
+                    }
+                }
+
+                if (openerIndent !== null) {
+                    e.preventDefault();
+                    // Replace current line's indentation with opener's indentation + the brace
+                    // We need to find where the current line started
+                    const lineStartIndex = value.lastIndexOf('\n', selectionStart - 1) + 1;
+                    const newValue = value.substring(0, lineStartIndex) + openerIndent + '}' + value.substring(selectionEnd);
+                    const newCursorPos = lineStartIndex + openerIndent.length + 1;
+                    setEditorState({ value: newValue, selection: newCursorPos });
+                }
+            }
         }
 
         const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
         if (pairs[key]) {
-            const charAfter = value.charAt(selectionStart);
-            if (!charAfter || /\s|\)|\}|\]|;/.test(charAfter)) {
+            if (selectionStart !== selectionEnd) {
                 e.preventDefault();
-                const newValue = value.substring(0, selectionStart) + key + pairs[key] + value.substring(selectionEnd);
-                setCode(newValue);
-                setTimeout(() => { target.setSelectionRange(selectionStart + 1, selectionStart + 1); }, 0);
+                const selectedText = value.substring(selectionStart, selectionEnd);
+                const newValue = value.substring(0, selectionStart) + key + selectedText + pairs[key] + value.substring(selectionEnd);
+                setEditorState({ value: newValue, selection: selectionEnd + 1 });
+                // Restore selection range to cover the wrapped text
+                setTimeout(() => {
+                    target.setSelectionRange(selectionStart + 1, selectionEnd + 1);
+                }, 0);
+            } else {
+                const charAfter = value.charAt(selectionStart);
+                if (!charAfter || /\s|\)|\}|\]|;/.test(charAfter)) {
+                    e.preventDefault();
+                    const newValue = value.substring(0, selectionStart) + key + pairs[key] + value.substring(selectionEnd);
+                    setEditorState({ value: newValue, selection: selectionStart + 1 });
+                }
             }
         }
     };
@@ -307,7 +375,7 @@ const ArenaPage = () => {
             setSession(response.data);
             sessionActiveRef.current = true; // Mark as active
             setTimeLimit(response.data.timeLimit);
-            setCode(response.data.lesson?.exercise?.starterCode || '');
+            setCode({ value: response.data.lesson?.exercise?.starterCode || '', selection: 0 });
             setShowSelection(false);
             setDeathData(null);
             setShowTransition(true);
@@ -350,8 +418,8 @@ const ArenaPage = () => {
                         lesson: data.nextLesson
                     }));
                     setTimeLimit(data.nextTimeLimit);
-                    setCode(data.nextLesson?.exercise?.starterCode || '');
-                    setOutput(prev => [...prev, { type: 'success', text: `>> NODE ${data.level}.${data.part} BREACHED. ${message}` }]);
+                    setCode({ value: data.nextLesson?.exercise?.starterCode || '', selection: 0 });
+                    setOutput(prev => [...prev, { type: 'success', text: `>> NODE ${data.level}.${data.part} BREACHED.${message} ` }]);
 
                     // Trigger Transition Flash
                     setShowTransition(true);
@@ -359,39 +427,68 @@ const ArenaPage = () => {
 
                     addNotification({ type: 'success', message: `NODE ${data.level} BREACHED.` });
                 }
-            } else {
-                // FAILURE - DEATH
-                const lang = session.language; // Capture before nullifying
-                sessionActiveRef.current = false; // Mark dead
-                setDeathData(data);
-                setSession(null);
-                setShake(true);
-                setTimeout(() => setShake(false), 500);
+            }
+            else {
+                // FAILURE
+                const lang = session.language;
 
-                const deathOutput = [
-                    { type: 'error', text: '!! CRITICAL FAILURE !!' },
-                    { type: 'error', text: '✗ NEURAL LINK COLLAPSED.' },
-                    { type: 'error', text: data.result?.error || 'Logic violation detected. Forcible disconnection imminent.' }
-                ];
-
-                if (data.result?.details) {
-                    data.result.details.forEach((test, i) => {
-                        if (!test.passed) {
-                            deathOutput.push({ type: 'error', text: `[Test ${i + 1}] FAILED: ${test.stderr || 'Incorrect output'}` });
-                        }
-                    });
-                }
-
-                setOutput(prev => [...prev, ...deathOutput]);
-
-                // Sync lockouts immediately for visual feedback
-                if (lang && data.lockoutUntil) {
-                    setLockouts(prev => ({
+                if (!data.death) {
+                    // LOST A LIFE BUT SURVIVED
+                    setSession(prev => ({
                         ...prev,
-                        [lang]: {
-                            lockoutUntil: new Date(data.lockoutUntil)
-                        }
+                        livesRemaining: data.livesRemaining
                     }));
+                    setShake(true);
+                    setTimeout(() => setShake(false), 500);
+
+                    const lifeOutput = [
+                        { type: 'error', text: '!! LOGIC FAILURE DETECTED !!' },
+                        { type: 'error', text: `WARNING: NEURAL INTEGRITY COMPROMISED.LIVES REMAINING: ${data.livesRemaining} ` }
+                    ];
+
+                    if (data.result?.details) {
+                        data.result.details.forEach((test, i) => {
+                            if (!test.passed) {
+                                lifeOutput.push({ type: 'error', text: `[Test ${i + 1}]FAILED: ${test.stderr || 'Incorrect output'} ` });
+                            }
+                        });
+                    }
+
+                    setOutput(prev => [...prev, ...lifeOutput]);
+                    addNotification({ type: 'warning', message: 'LIFE LOST. RECALIBRATE IMMINENT.' });
+                } else {
+                    // DEATH
+                    sessionActiveRef.current = false; // Mark dead
+                    setDeathData(data);
+                    setSession(null); // Clear session to show death screen overlay
+                    setShake(true);
+                    setTimeout(() => setShake(false), 500);
+
+                    const deathOutput = [
+                        { type: 'error', text: '!! CRITICAL FAILURE !!' },
+                        { type: 'error', text: '✗ NEURAL LINK COLLAPSED.' },
+                        { type: 'error', text: data.result?.error || 'Logic violation detected. Forcible disconnection imminent.' }
+                    ];
+
+                    if (data.result?.details) {
+                        data.result.details.forEach((test, i) => {
+                            if (!test.passed) {
+                                deathOutput.push({ type: 'error', text: `[Test ${i + 1}]FAILED: ${test.stderr || 'Incorrect output'} ` });
+                            }
+                        });
+                    }
+
+                    setOutput(prev => [...prev, ...deathOutput]);
+
+                    // Sync lockouts immediately for visual feedback
+                    if (lang && data.lockoutUntil) {
+                        setLockouts(prev => ({
+                            ...prev,
+                            [lang]: {
+                                lockoutUntil: new Date(data.lockoutUntil)
+                            }
+                        }));
+                    }
                 }
             }
         } catch (err) {
@@ -401,11 +498,24 @@ const ArenaPage = () => {
             });
         } finally {
             setIsSubmitting(false);
-            if (data && !data.passed) {
+            if (data && !data.passed && data.death) {
                 setRedirectTimer(8); // Longer timer if they died from wrong code (to read terminal)
             }
         }
     };
+
+    const LivesDisplay = ({ lives }) => (
+        <div className="flex gap-1">
+            {[...Array(3)].map((_, i) => (
+                <Heart
+                    key={i}
+                    size={16}
+                    className={`${i < lives ? 'text-red-500' : 'text-gray-800'} `}
+                    fill={i < lives ? "currentColor" : "none"}
+                />
+            ))}
+        </div>
+    );
 
     if (loading) {
         return (
@@ -426,7 +536,7 @@ const ArenaPage = () => {
                     <h1 className="text-6xl font-black text-red-600 mb-6 tracking-tighter">THE ARENA</h1>
                     <p className="text-white/60 mb-12 text-lg">
                         Sudden Death Mode. Complete 10 algorithmic challenges across 5 difficulty levels.
-                        One mistake results in death, point loss, and a temporary system burnout.
+                        Three mistakes results in death, point loss, and a temporary system burnout.
                     </p>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -461,14 +571,14 @@ const ArenaPage = () => {
                                         }
                                         handleStartArena(lang);
                                     }}
-                                    className={`group p-6 border transition-all text-left relative overflow-hidden backdrop-blur-sm ${isLocked
+                                    className={`group p - 6 border transition - all text - left relative overflow - hidden backdrop - blur - sm ${isLocked
                                         ? 'border-red-900/30 bg-red-950/20 cursor-not-allowed'
                                         : isThisStarting
                                             ? 'border-red-600 bg-red-600/10'
                                             : (user?.progress?.find(p => p.language === lang)?.lastPassedDay || 0) < 1
                                                 ? 'border-white/5 bg-white/[0.01] opacity-40 grayscale'
                                                 : 'border-white/10 bg-white/[0.02] hover:bg-red-600/10 hover:border-red-600/50'
-                                        }`}
+                                        } `}
                                 >
                                     {isLocked && (
                                         <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[2px] z-10" />
@@ -483,12 +593,12 @@ const ArenaPage = () => {
                                             <Skull size={14} className="text-red-900" />
                                         </div>
                                     )}
-                                    <div className={`font-black uppercase tracking-widest text-xs mb-2 ${isLocked ? 'text-red-900' : 'text-white group-hover:text-red-500'
-                                        }`}>
+                                    <div className={`font - black uppercase tracking - widest text - xs mb - 2 ${isLocked ? 'text-red-900' : 'text-white group-hover:text-red-500'
+                                        } `}>
                                         {lang}
                                     </div>
                                     <div className="text-white/40 text-[10px] uppercase">
-                                        {isLocked ? `Locked: ${timeStr}` : (user?.progress?.find(p => p.language === lang)?.lastPassedDay || 0) < 1 ? 'Mastery Required' : 'Select Protocol'}
+                                        {isLocked ? `Locked: ${timeStr} ` : (user?.progress?.find(p => p.language === lang)?.lastPassedDay || 0) < 1 ? 'Mastery Required' : 'Select Protocol'}
                                     </div>
                                 </button>
                             );
@@ -517,7 +627,7 @@ const ArenaPage = () => {
     };
 
     return (
-        <div className={`h-screen bg-[#050505] flex flex-col pt-16 overflow-hidden relative ${shake ? 'glitch-shake' : ''}`}>
+        <div className={`h - screen bg - [#050505] flex flex - col pt - 16 overflow - hidden relative ${shake ? 'glitch-shake' : ''} `}>
             <CyberBackground intensity={getThreatIntensity()} />
 
             {/* Arena Header: Redesigned as HUD */}
@@ -538,10 +648,10 @@ const ArenaPage = () => {
                             <div className="hidden lg:flex items-center gap-3 px-6 py-3 bg-red-600/5 border border-red-600/20 rounded-sm">
                                 {levels.map(l => (
                                     <div key={l} className="flex items-center">
-                                        <div className={`w-3 h-3 rotate-45 border transition-all duration-500 ${session.level === l ? 'bg-red-600 border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.8)] scale-125' :
+                                        <div className={`w - 3 h - 3 rotate - 45 border transition - all duration - 500 ${session.level === l ? 'bg-red-600 border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.8)] scale-125' :
                                             session.level > l ? 'bg-white/40 border-white/20' : 'bg-transparent border-white/10'
-                                            }`} />
-                                        {l < 5 && <div className={`w-6 h-[1px] ${session.level > l ? 'bg-white/20' : 'bg-white/5'}`} />}
+                                            } `} />
+                                        {l < 5 && <div className={`w - 6 h - [1px] ${session.level > l ? 'bg-white/20' : 'bg-white/5'} `} />}
                                     </div>
                                 ))}
                                 <div className="ml-4 text-[10px] font-bold text-white/40 uppercase tracking-widest">Mastery Path</div>
@@ -549,6 +659,11 @@ const ArenaPage = () => {
                         </div>
 
                         <div className="flex items-center gap-8">
+                            <div className="flex flex-col items-end border-r border-white/10 pr-6 mr-2">
+                                <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Neural Integrity</div>
+                                <LivesDisplay lives={session.livesRemaining ?? 3} />
+                            </div>
+
                             <div className="flex flex-col items-end mr-4">
                                 <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Time to Terminal</div>
                                 <ArenaTimer
@@ -560,7 +675,7 @@ const ArenaPage = () => {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || !!deathData}
-                                className={`px-10 py-3 bg-red-600 hover:bg-red-500 text-white font-black tracking-[0.2em] uppercase text-xs transition-all transform active:scale-95 disabled:opacity-50 disabled:grayscale ${isSubmitting ? 'animate-pulse' : ''}`}
+                                className={`px - 10 py - 3 bg - red - 600 hover: bg - red - 500 text - white font - black tracking - [0.2em] uppercase text - xs transition - all transform active: scale - 95 disabled: opacity - 50 disabled:grayscale ${isSubmitting ? 'animate-pulse' : ''} `}
                             >
                                 {isSubmitting ? 'UPLOADING...' : 'EXECUTE'}
                             </button>
@@ -599,10 +714,10 @@ const ArenaPage = () => {
                                 {/* Line Numbers */}
                                 <div
                                     ref={lineNumbersRef}
-                                    className="w-14 bg-black/60 border-r border-red-600/20 py-6 text-right pr-4 font-mono text-[13px] text-white/10 select-none overflow-hidden"
+                                    className="w-14 bg-black/60 border-r border-red-600/20 py-6 text-right pr-4 font-mono text-[14px] text-white/10 select-none overflow-hidden"
                                 >
                                     {code.split('\n').map((_, i) => (
-                                        <div key={i} style={{ height: '22.75px', lineHeight: '22.75px' }}>
+                                        <div key={i} style={{ height: '24px', lineHeight: '24px' }}>
                                             {(i + 1).toString().padStart(2, '0')}
                                         </div>
                                     ))}
@@ -612,14 +727,50 @@ const ArenaPage = () => {
                                     {/* Backdrop for highlighting */}
                                     <div
                                         ref={backdropRef}
-                                        className="editor-layer editor-backdrop font-mono italic opacity-90"
-                                        dangerouslySetInnerHTML={{ __html: highlightCode(code, session?.language) + '\n ' }}
-                                    />
+                                        className="editor-layer editor-backdrop pointer-events-none select-none"
+                                        aria-hidden="true"
+                                    >
+                                        <SyntaxHighlighter
+                                            language={session?.language || 'javascript'}
+                                            style={vscDarkPlus}
+                                            customStyle={{
+                                                margin: 0,
+                                                padding: 0,
+                                                background: 'transparent',
+                                                fontSize: 'inherit',
+                                                lineHeight: 'inherit',
+                                                minHeight: '100%',
+                                                minWidth: '100%',
+                                                overflow: 'visible'
+                                            }}
+                                            codeTagProps={{
+                                                style: {
+                                                    fontFamily: 'inherit',
+                                                    fontSize: 'inherit',
+                                                    lineHeight: 'inherit',
+                                                    display: 'block',
+                                                    padding: 0
+                                                }
+                                            }}
+                                            wrapLines={true}
+                                            wrapLongLines={false}
+                                            lineProps={{
+                                                style: {
+                                                    display: 'block',
+                                                    height: '24px',
+                                                    lineHeight: '24px'
+                                                }
+                                            }}
+                                        >
+                                            {code || ' '}
+                                        </SyntaxHighlighter>
+                                    </div>
 
                                     {/* Hidden Textarea for Input */}
                                     <textarea
+                                        ref={textareaRef}
                                         value={code}
-                                        onChange={(e) => setCode(e.target.value)}
+                                        onChange={(e) => setEditorState({ value: e.target.value, selection: e.target.selectionEnd })}
                                         onKeyDown={handleKeyDown}
                                         onScroll={handleScroll}
                                         wrap="off"
@@ -654,9 +805,9 @@ const ArenaPage = () => {
                                 {output.map((line, i) => (
                                     <div key={i} className="mb-2 flex items-start gap-3">
                                         <span className="text-white/10 flex-shrink-0">[{new Date().toLocaleTimeString([], { hour12: false })}]</span>
-                                        <p className={`cyber-terminal-text ${line.type === 'error' ? 'text-red-500 font-bold' :
+                                        <p className={`cyber - terminal - text ${line.type === 'error' ? 'text-red-500 font-bold' :
                                             line.type === 'success' ? 'text-green-400' : 'text-white/40'
-                                            }`}>
+                                            } `}>
                                             {line.text}
                                         </p>
                                     </div>
@@ -704,7 +855,7 @@ const ArenaPage = () => {
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Burnout:</span>
-                                    <span className="text-red-400">60 Minutes</span>
+                                    <span className="text-red-400">15 Minutes</span>
                                 </div>
                             </div>
                         </div>

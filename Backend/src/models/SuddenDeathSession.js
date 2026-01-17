@@ -45,7 +45,7 @@ const suddenDeathSessionSchema = new mongoose.Schema({
     },
     livesRemaining: {
         type: Number,
-        default: 1,
+        default: 3,
     }
 }, {
     timestamps: true,

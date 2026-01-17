@@ -141,10 +141,12 @@ async function runSingleTest(test) {
       ${code}
       
       // Call the main function with test input
+      const input = ${JSON.stringify(input)};
+      const args = Array.isArray(input) ? input : [input];
       if (typeof solution === 'function') {
-        return solution(${JSON.stringify(input)});
+        return solution(...args);
       } else if (typeof main === 'function') {
-        return main(${JSON.stringify(input)});
+        return main(...args);
       } else {
         throw new Error('No solution or main function found');
       }

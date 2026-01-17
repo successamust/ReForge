@@ -1,15 +1,19 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useLayoutEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Button from '../components/ui/Button';
 import { CodeFile, Processor, RunPlay, VerifiedCheck } from '../components/icons/CustomIcons';
 import { practiceService } from '../services/practice.service';
 import { AppContext } from '../context/AppContext';
 import SEO from '../components/SEO';
+import useUndoRedo from '../hooks/useUndoRedo';
 
 const PracticePage = () => {
     const { isAuthenticated, addNotification } = useContext(AppContext);
     const [language, setLanguage] = useState('javascript');
-    const [code, setCode] = useState('// Write your code here and check syntax...');
+    const [editorState, setEditorState, undo, redo] = useUndoRedo({ value: '// Write your code here and check syntax...', selection: 0 });
+    const code = editorState.value;
     const [output, setOutput] = useState([]);
     const [isVerifying, setIsVerifying] = useState(false);
     const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
@@ -102,6 +106,13 @@ const PracticePage = () => {
     const backdropRef = useRef(null);
     const terminalRef = useRef(null);
     const lineNumbersRef = useRef(null);
+    const textareaRef = useRef(null);
+
+    useLayoutEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.setSelectionRange(editorState.selection, editorState.selection);
+        }
+    }, [editorState]);
 
     // Auto-scroll terminal to bottom when output changes
     useEffect(() => {
@@ -110,43 +121,6 @@ const PracticePage = () => {
         }
     }, [output]);
 
-    const highlightCode = (code, lang) => {
-        if (!code) return '';
-
-        // Escape HTML
-        let escaped = code
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-
-        const keywords = [
-            'function', 'const', 'let', 'var', 'return', 'if', 'else', 'for', 'while',
-            'import', 'export', 'await', 'async', 'try', 'catch', 'new', 'class',
-            'extends', 'super', 'switch', 'case', 'break', 'default', 'true', 'false', 'null',
-            'def', 'elif', 'lambda', 'with', 'yield', 'pass', 'func', 'package', 'type',
-            'interface', 'struct', 'chan', 'go', 'select', 'using', 'namespace', 'public',
-            'private', 'protected', 'internal', 'static', 'readonly', 'void', 'bool',
-            'string', 'int', 'float', 'double', 'decimal'
-        ];
-
-        const commentRegex = lang === 'python' ? `(#.*$)` : `(\\/\\/.*$|\\/\\*[\\s\\S]*?\\*\\/)`;
-
-        const regex = new RegExp(
-            `${commentRegex}|` +
-            `(".*?"|'.*?'|\`.*?\`)|` +
-            `\\b(${keywords.join('|')})\\b|` +
-            `(\\b\\d+\\b)`,
-            'gm'
-        );
-
-        return escaped.replace(regex, (match, p1, p2, p3, p4) => {
-            if (p1) return `<span style="color: rgba(255,255,255,0.3); font-style: italic;">${p1}</span>`;
-            if (p2) return `<span style="color: #4ade80;">${p2}</span>`;
-            if (p3) return `<span style="color: #A855F7; font-weight: bold;">${p3}</span>`;
-            if (p4) return `<span style="color: #60a5fa;">${p4}</span>`;
-            return match;
-        });
-    };
 
     const handleScroll = (e) => {
         if (backdropRef.current) {
@@ -160,6 +134,18 @@ const PracticePage = () => {
 
     const handleKeyDown = (e) => {
         const { key, target, metaKey, ctrlKey } = e;
+        if ((metaKey || ctrlKey) && !e.shiftKey && key === 'z') {
+            e.preventDefault();
+            undo();
+            return;
+        }
+
+        if ((metaKey || ctrlKey) && e.shiftKey && key === 'z') {
+            e.preventDefault();
+            redo();
+            return;
+        }
+
         const { selectionStart, selectionEnd, value } = target;
 
         if (key === '/' && (metaKey || ctrlKey)) {
@@ -198,13 +184,8 @@ const PracticePage = () => {
             const newText = transformedLines.join('\n');
             const newValue = value.substring(0, selectionBefore) + newText + after;
 
-            setCode(newValue);
-
-            // Adjust selection range
-            setTimeout(() => {
-                const diff = newText.length - selectedText.length;
-                target.setSelectionRange(startPos, endPos + diff);
-            }, 0);
+            const diff = newText.length - selectedText.length;
+            setEditorState({ value: newValue, selection: endPos + diff });
             return;
         }
 
@@ -212,42 +193,102 @@ const PracticePage = () => {
             e.preventDefault();
             const tab = '  ';
             const newValue = value.substring(0, selectionStart) + tab + value.substring(selectionEnd);
-            setCode(newValue);
-            setTimeout(() => {
-                target.setSelectionRange(selectionStart + tab.length, selectionStart + tab.length);
-            }, 0);
+            setEditorState({ value: newValue, selection: selectionStart + tab.length });
         }
 
         if (key === 'Enter') {
             e.preventDefault();
+
+            // Get current line's indentation
             const linesBefore = value.substring(0, selectionStart).split('\n');
             const currentLine = linesBefore[linesBefore.length - 1];
             const indentMatch = currentLine.match(/^\s*/);
             const indent = indentMatch ? indentMatch[0] : '';
+            const charBefore = value.charAt(selectionStart - 1);
+            const charAfter = value.charAt(selectionStart);
+
+            // Smart Enter between brackets: {|} -> Enter -> {\n  |\n}
+            if ((charBefore === '{' && charAfter === '}') ||
+                (charBefore === '[' && charAfter === ']') ||
+                (charBefore === '(' && charAfter === ')')) {
+                const extraIndent = '  ';
+                const insertion = '\n' + indent + extraIndent + '\n' + indent;
+                const newValue = value.substring(0, selectionStart) + insertion + value.substring(selectionEnd);
+                const cursorPosition = selectionStart + 1 + indent.length + extraIndent.length;
+                setEditorState({ value: newValue, selection: cursorPosition });
+                return;
+            }
+
+            // Normal Enter with auto-indent
             let extraIndent = '';
-            if (currentLine.trim().endsWith('{') || currentLine.trim().endsWith('(') || currentLine.trim().endsWith('[')) {
+            // If the previous line actually ends with an opener (ignoring whitespace), increase indent
+            const trimmedLine = currentLine.trimEnd();
+            if (trimmedLine.endsWith('{') || trimmedLine.endsWith('(') || trimmedLine.endsWith('[')) {
                 extraIndent = '  ';
             }
+
             const insertion = '\n' + indent + extraIndent;
             const newValue = value.substring(0, selectionStart) + insertion + value.substring(selectionEnd);
-            setCode(newValue);
-            setTimeout(() => {
-                target.setSelectionRange(selectionStart + insertion.length, selectionStart + insertion.length);
-            }, 0);
+            setEditorState({ value: newValue, selection: selectionStart + insertion.length });
+        }
+
+        if (key === '}') {
+            const linesBefore = value.substring(0, selectionStart).split('\n');
+            const currentLineBeforeCursor = linesBefore[linesBefore.length - 1];
+
+            // Only smart dedent if we are currently just indentation (whitespace)
+            if (/^\s*$/.test(currentLineBeforeCursor)) {
+                // Find matching opener to steal its indentation
+                let stack = 0;
+                let openerIndent = null;
+
+                // backwards scan lines
+                for (let i = linesBefore.length - 2; i >= 0; i--) {
+                    const line = linesBefore[i];
+                    const openCount = (line.match(/\{/g) || []).length;
+                    const closeCount = (line.match(/\}/g) || []).length;
+
+                    stack += (closeCount - openCount);
+
+                    if (stack < 0) {
+                        // Found our logical opener
+                        openerIndent = line.match(/^\s*/)?.[0] || '';
+                        break;
+                    }
+                }
+
+                if (openerIndent !== null) {
+                    e.preventDefault();
+                    // Replace current line's indentation with opener's indentation + the brace
+                    const lineStartIndex = value.lastIndexOf('\n', selectionStart - 1) + 1;
+                    const newValue = value.substring(0, lineStartIndex) + openerIndent + '}' + value.substring(selectionEnd);
+                    const newCursorPos = lineStartIndex + openerIndent.length + 1;
+                    setEditorState({ value: newValue, selection: newCursorPos });
+                    return;
+                }
+            }
         }
 
         const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
         if (pairs[key]) {
-            const charAfter = value.charAt(selectionStart);
-            const shouldClose = !charAfter || /\s|\)|\}|\]|;/.test(charAfter);
-            if (shouldClose) {
+            if (selectionStart !== selectionEnd) {
                 e.preventDefault();
-                const closing = pairs[key];
-                const newValue = value.substring(0, selectionStart) + key + closing + value.substring(selectionEnd);
-                setCode(newValue);
+                const selectedText = value.substring(selectionStart, selectionEnd);
+                const newValue = value.substring(0, selectionStart) + key + selectedText + pairs[key] + value.substring(selectionEnd);
+                setEditorState({ value: newValue, selection: selectionEnd + 1 });
+                // Restore selection range to cover the wrapped text
                 setTimeout(() => {
-                    target.setSelectionRange(selectionStart + 1, selectionStart + 1);
+                    target.setSelectionRange(selectionStart + 1, selectionEnd + 1);
                 }, 0);
+            } else {
+                const charAfter = value.charAt(selectionStart);
+                const shouldClose = !charAfter || /\s|\)|\}|\]|;/.test(charAfter);
+                if (shouldClose) {
+                    e.preventDefault();
+                    const closing = pairs[key];
+                    const newValue = value.substring(0, selectionStart) + key + closing + value.substring(selectionEnd);
+                    setEditorState({ value: newValue, selection: selectionStart + 1 });
+                }
             }
         }
     };
@@ -322,7 +363,7 @@ const PracticePage = () => {
                                         className="w-12 bg-black/40 border-r border-white/5 py-6 text-right pr-3 font-mono text-[14px] text-white/10 select-none overflow-hidden"
                                     >
                                         {code.split('\n').map((_, i) => (
-                                            <div key={i} style={{ height: '22.75px', lineHeight: '22.75px' }}>
+                                            <div key={i} style={{ height: '24px', lineHeight: '24px' }}>
                                                 {i + 1}
                                             </div>
                                         ))}
@@ -332,14 +373,50 @@ const PracticePage = () => {
                                         {/* Backdrop for highlighting */}
                                         <div
                                             ref={backdropRef}
-                                            className="editor-layer editor-backdrop"
-                                            dangerouslySetInnerHTML={{ __html: highlightCode(code, language) + '\n ' }}
-                                        />
+                                            className="editor-layer editor-backdrop pointer-events-none select-none"
+                                            aria-hidden="true"
+                                        >
+                                            <SyntaxHighlighter
+                                                language={language}
+                                                style={vscDarkPlus}
+                                                customStyle={{
+                                                    margin: 0,
+                                                    padding: 0,
+                                                    background: 'transparent',
+                                                    fontSize: 'inherit',
+                                                    lineHeight: 'inherit',
+                                                    minHeight: '100%',
+                                                    minWidth: '100%',
+                                                    overflow: 'visible'
+                                                }}
+                                                codeTagProps={{
+                                                    style: {
+                                                        fontFamily: 'inherit',
+                                                        fontSize: 'inherit',
+                                                        lineHeight: 'inherit',
+                                                        display: 'block',
+                                                        padding: 0
+                                                    }
+                                                }}
+                                                wrapLines={true}
+                                                wrapLongLines={false}
+                                                lineProps={{
+                                                    style: {
+                                                        display: 'block',
+                                                        height: '24px',
+                                                        lineHeight: '24px'
+                                                    }
+                                                }}
+                                            >
+                                                {code || ' '}
+                                            </SyntaxHighlighter>
+                                        </div>
 
                                         {/* Hidden Textarea for Input */}
                                         <textarea
+                                            ref={textareaRef}
                                             value={code}
-                                            onChange={(e) => setCode(e.target.value)}
+                                            onChange={(e) => setEditorState({ value: e.target.value, selection: e.target.selectionEnd })}
                                             onKeyDown={handleKeyDown}
                                             onScroll={handleScroll}
                                             wrap="off"

@@ -95,9 +95,15 @@ def run_single_test(test):
         
         # Find and call the solution function
         if 'solution' in namespace:
-            result = namespace['solution'](test_input)
+            if isinstance(test_input, list):
+                result = namespace['solution'](*test_input)
+            else:
+                result = namespace['solution'](test_input)
         elif 'main' in namespace:
-            result = namespace['main'](test_input)
+            if isinstance(test_input, list):
+                result = namespace['main'](*test_input)
+            else:
+                result = namespace['main'](test_input)
         else:
             raise Exception('No solution or main function found')
         
