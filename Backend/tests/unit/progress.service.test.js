@@ -45,9 +45,9 @@ describe('Progress Service', () => {
         it('should advance to next day on success', async () => {
             const result = await progressService.advanceProgress(testUser._id, 'javascript', 1);
 
-            expect(result.previousDay).toBe(1);
-            expect(result.currentDay).toBe(2);
-            expect(result.completed).toBe(false);
+            expect(result.success).toBe(true);
+            expect(result.dayAdvanced).toBe(2);
+            expect(result.courseCompleted).toBe(false);
         });
 
         it('should throw error if attempting wrong day', async () => {
@@ -115,6 +115,8 @@ describe('Progress Service', () => {
             const updated = await User.findById(testUser._id);
             const progress = updated.getProgress('javascript');
             expect(progress.currentDay).toBe(2);
+            expect(progress.lastPassedDay).toBe(1);
+            expect(progress.lastAdvancedAt).toBeDefined();
             expect(progress.failedDay).toBeNull();
             expect(progress.failedAt).toBeNull();
         });

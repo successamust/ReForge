@@ -123,12 +123,13 @@ const PracticePage = () => {
 
 
     const handleScroll = (e) => {
+        const { scrollTop, scrollLeft } = e.target;
         if (backdropRef.current) {
-            backdropRef.current.scrollTop = e.target.scrollTop;
-            backdropRef.current.scrollLeft = e.target.scrollLeft;
+            backdropRef.current.scrollTop = scrollTop;
+            backdropRef.current.scrollLeft = scrollLeft;
         }
         if (lineNumbersRef.current) {
-            lineNumbersRef.current.scrollTop = e.target.scrollTop;
+            lineNumbersRef.current.scrollTop = scrollTop;
         }
     };
 
@@ -356,7 +357,7 @@ const PracticePage = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex bg-black/50 flex-1 relative overflow-hidden min-h-[500px]">
+                                <div className="flex bg-black/50 flex-1 relative overflow-hidden min-h-[400px] h-[60vh] max-h-[800px]">
                                     {/* Line Numbers */}
                                     <div
                                         ref={lineNumbersRef}

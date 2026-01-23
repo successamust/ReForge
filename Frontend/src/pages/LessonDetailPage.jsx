@@ -290,12 +290,13 @@ const LessonDetailPage = () => {
 
 
     const handleScroll = (e) => {
+        const { scrollTop, scrollLeft } = e.target;
         if (backdropRef.current) {
-            backdropRef.current.scrollTop = e.target.scrollTop;
-            backdropRef.current.scrollLeft = e.target.scrollLeft;
+            backdropRef.current.scrollTop = scrollTop;
+            backdropRef.current.scrollLeft = scrollLeft;
         }
         if (lineNumbersRef.current) {
-            lineNumbersRef.current.scrollTop = e.target.scrollTop;
+            lineNumbersRef.current.scrollTop = scrollTop;
         }
     };
 
@@ -744,7 +745,7 @@ const LessonDetailPage = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex bg-black/50 h-[500px]">
+                                                <div className="flex bg-black/50 h-[60vh] min-h-[400px] max-h-[800px]">
                                                     <div
                                                         ref={lineNumbersRef}
                                                         className="w-12 bg-black/40 border-r border-white/5 py-6 text-right pr-3 font-mono text-[14px] text-white/10 select-none overflow-hidden"

@@ -344,8 +344,10 @@ export async function applyRollback(userId, language, isSystem = true) {
             {
                 $set: {
                     'progress.$.currentDay': rollbackTo,
+                    'progress.$.lastPassedDay': rollbackTo - 1,
                     'progress.$.failedDay': null,
                     'progress.$.failedAt': null,
+                    'progress.$.lastAdvancedAt': new Date(),
                     'progress.$.adminOverride': false,
                 },
             },

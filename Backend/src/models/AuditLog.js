@@ -17,6 +17,7 @@ const auditLogSchema = new mongoose.Schema({
             'PROGRESS_FAIL',
             'PROGRESS_COMPLETE',
             'PROGRESS_ADMIN_OVERRIDE',
+            'PROGRESS_START',
 
             // Submission actions
             'SUBMISSION_CREATE',
@@ -44,6 +45,10 @@ const auditLogSchema = new mongoose.Schema({
             'ARENA_DEATH',
             'ARENA_TIMEOUT',
             'ARENA_COMPLETE',
+
+            // RELAPSE actions
+            'RELAPSE_TRIGGERED',
+            'RELAPSE_RECOVERED',
 
             // Certificate actions
             'CERTIFICATE_GENERATE',

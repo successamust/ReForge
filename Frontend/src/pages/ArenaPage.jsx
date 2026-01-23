@@ -199,12 +199,13 @@ const ArenaPage = () => {
 
 
     const handleScroll = (e) => {
+        const { scrollTop, scrollLeft } = e.target;
         if (backdropRef.current) {
-            backdropRef.current.scrollTop = e.target.scrollTop;
-            backdropRef.current.scrollLeft = e.target.scrollLeft;
+            backdropRef.current.scrollTop = scrollTop;
+            backdropRef.current.scrollLeft = scrollLeft;
         }
         if (lineNumbersRef.current) {
-            lineNumbersRef.current.scrollTop = e.target.scrollTop;
+            lineNumbersRef.current.scrollTop = scrollTop;
         }
     };
 
@@ -243,7 +244,7 @@ const ArenaPage = () => {
             const selectedText = value.substring(selectionBefore, selectionAfter);
             const lines = selectedText.split('\n');
             const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const prefixRegex = new RegExp(`^ (\\s *)${escapedPrefix} \\s ? `);
+            const prefixRegex = new RegExp(`^(\\s*)${escapedPrefix}\\s?`);
 
             // Determine if we should comment or uncomment
             // If any line is NOT a comment, we comment all lines
@@ -375,7 +376,7 @@ const ArenaPage = () => {
             setSession(response.data);
             sessionActiveRef.current = true; // Mark as active
             setTimeLimit(response.data.timeLimit);
-            setCode({ value: response.data.lesson?.exercise?.starterCode || '', selection: 0 });
+            setEditorState({ value: response.data.lesson?.exercise?.starterCode || '', selection: 0 });
             setShowSelection(false);
             setDeathData(null);
             setShowTransition(true);
@@ -418,7 +419,7 @@ const ArenaPage = () => {
                         lesson: data.nextLesson
                     }));
                     setTimeLimit(data.nextTimeLimit);
-                    setCode({ value: data.nextLesson?.exercise?.starterCode || '', selection: 0 });
+                    setEditorState({ value: data.nextLesson?.exercise?.starterCode || '', selection: 0 });
                     setOutput(prev => [...prev, { type: 'success', text: `>> NODE ${data.level}.${data.part} BREACHED.${message} ` }]);
 
                     // Trigger Transition Flash
@@ -571,14 +572,14 @@ const ArenaPage = () => {
                                         }
                                         handleStartArena(lang);
                                     }}
-                                    className={`group p - 6 border transition - all text - left relative overflow - hidden backdrop - blur - sm ${isLocked
+                                    className={`group p-6 border transition-all text-left relative overflow-hidden backdrop-blur-sm ${isLocked
                                         ? 'border-red-900/30 bg-red-950/20 cursor-not-allowed'
                                         : isThisStarting
                                             ? 'border-red-600 bg-red-600/10'
                                             : (user?.progress?.find(p => p.language === lang)?.lastPassedDay || 0) < 1
                                                 ? 'border-white/5 bg-white/[0.01] opacity-40 grayscale'
                                                 : 'border-white/10 bg-white/[0.02] hover:bg-red-600/10 hover:border-red-600/50'
-                                        } `}
+                                        }`}
                                 >
                                     {isLocked && (
                                         <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[2px] z-10" />
@@ -593,12 +594,12 @@ const ArenaPage = () => {
                                             <Skull size={14} className="text-red-900" />
                                         </div>
                                     )}
-                                    <div className={`font - black uppercase tracking - widest text - xs mb - 2 ${isLocked ? 'text-red-900' : 'text-white group-hover:text-red-500'
-                                        } `}>
+                                    <div className={`font-black uppercase tracking-widest text-xs mb-2 ${isLocked ? 'text-red-900' : 'text-white group-hover:text-red-500'
+                                        }`}>
                                         {lang}
                                     </div>
                                     <div className="text-white/40 text-[10px] uppercase">
-                                        {isLocked ? `Locked: ${timeStr} ` : (user?.progress?.find(p => p.language === lang)?.lastPassedDay || 0) < 1 ? 'Mastery Required' : 'Select Protocol'}
+                                        {isLocked ? `Locked: ${timeStr}` : (user?.progress?.find(p => p.language === lang)?.lastPassedDay || 0) < 1 ? 'Mastery Required' : 'Select Protocol'}
                                     </div>
                                 </button>
                             );
@@ -627,7 +628,7 @@ const ArenaPage = () => {
     };
 
     return (
-        <div className={`h - screen bg - [#050505] flex flex - col pt - 16 overflow - hidden relative ${shake ? 'glitch-shake' : ''} `}>
+        <div className={`h-screen bg-[#050505] flex flex-col pt-16 overflow-hidden relative ${shake ? 'glitch-shake' : ''}`}>
             <CyberBackground intensity={getThreatIntensity()} />
 
             {/* Arena Header: Redesigned as HUD */}
@@ -648,10 +649,10 @@ const ArenaPage = () => {
                             <div className="hidden lg:flex items-center gap-3 px-6 py-3 bg-red-600/5 border border-red-600/20 rounded-sm">
                                 {levels.map(l => (
                                     <div key={l} className="flex items-center">
-                                        <div className={`w - 3 h - 3 rotate - 45 border transition - all duration - 500 ${session.level === l ? 'bg-red-600 border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.8)] scale-125' :
+                                        <div className={`w-3 h-3 rotate-45 border transition-all duration-500 ${session.level === l ? 'bg-red-600 border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.8)] scale-125' :
                                             session.level > l ? 'bg-white/40 border-white/20' : 'bg-transparent border-white/10'
-                                            } `} />
-                                        {l < 5 && <div className={`w - 6 h - [1px] ${session.level > l ? 'bg-white/20' : 'bg-white/5'} `} />}
+                                            }`} />
+                                        {l < 5 && <div className={`w-6 h-[1px] ${session.level > l ? 'bg-white/20' : 'bg-white/5'}`} />}
                                     </div>
                                 ))}
                                 <div className="ml-4 text-[10px] font-bold text-white/40 uppercase tracking-widest">Mastery Path</div>
@@ -675,7 +676,7 @@ const ArenaPage = () => {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || !!deathData}
-                                className={`px - 10 py - 3 bg - red - 600 hover: bg - red - 500 text - white font - black tracking - [0.2em] uppercase text - xs transition - all transform active: scale - 95 disabled: opacity - 50 disabled:grayscale ${isSubmitting ? 'animate-pulse' : ''} `}
+                                className={`px-10 py-3 bg-red-600 hover:bg-red-500 text-white font-black tracking-[0.2em] uppercase text-xs transition-all transform active:scale-95 disabled:opacity-50 disabled:grayscale ${isSubmitting ? 'animate-pulse' : ''}`}
                             >
                                 {isSubmitting ? 'UPLOADING...' : 'EXECUTE'}
                             </button>
