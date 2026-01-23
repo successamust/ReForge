@@ -15,6 +15,7 @@ const envSchema = Joi.object({
         : Joi.string().min(8).required(),
     REDIS_HOST: Joi.string().default('localhost'),
     REDIS_URL: Joi.string().uri().optional().allow(''),
+    RUNNER_MODE: Joi.string().valid('docker', 'judge0', 'piston', 'mock').default('mock'),
 }).unknown(true);
 
 const { error, value: envVars } = envSchema.validate(process.env);
@@ -46,10 +47,11 @@ const config = {
     },
 
     runner: {
-        mode: process.env.RUNNER_MODE || 'mock', // docker, judge0, mock
+        mode: process.env.RUNNER_MODE || 'mock', // docker, judge0, piston, mock
         timeout: parseInt(process.env.RUNNER_TIMEOUT_MS, 10) || 30000,
         memoryLimit: process.env.RUNNER_MEMORY_LIMIT || '256m',
         dockerSocket: process.env.DOCKER_SOCKET || '/var/run/docker.sock',
+        pistonApiUrl: process.env.PISTON_API_URL || 'https://emkc.org/api/v2/piston/execute',
     },
 
     judge0: {

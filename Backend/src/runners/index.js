@@ -1,6 +1,7 @@
 import config from '../config/index.js';
 import { runWithDocker } from './docker.runner.js';
 import { runWithJudge0 } from './judge0.runner.js';
+import { runWithPiston } from './piston.runner.js';
 import { runWithMock } from './mock.runner.js';
 import logger from '../utils/logger.js';
 
@@ -17,6 +18,8 @@ export async function runCode(language, code, tests, operation = 'test') {
             return runWithDocker(language, code, tests, operation);
         case 'judge0':
             return runWithJudge0(language, code, tests); // Judge0 doesn't support 'lint' easily here
+        case 'piston':
+            return runWithPiston(language, code, tests);
         case 'mock':
         default:
             return runWithMock(language, code, tests, operation);
@@ -25,4 +28,5 @@ export async function runCode(language, code, tests, operation = 'test') {
 
 export { runWithDocker } from './docker.runner.js';
 export { runWithJudge0 } from './judge0.runner.js';
+export { runWithPiston } from './piston.runner.js';
 export { runWithMock } from './mock.runner.js';
