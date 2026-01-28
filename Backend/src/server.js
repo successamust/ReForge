@@ -20,9 +20,11 @@ const startServer = async () => {
             startWorker();
         }
 
+        const PORT = process.env.PORT || config.port;
+
         // Start Express server
-        const server = app.listen(config.port, () => {
-            logger.info(`Server running in ${config.env} mode on port ${config.port}`);
+        const server = app.listen(PORT, () => {
+            logger.info(`Server running in ${config.env} mode on port ${PORT}`);
             logger.info(`API docs available at ${config.apiUrl}/api-docs`);
         });
 

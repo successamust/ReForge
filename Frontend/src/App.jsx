@@ -36,6 +36,7 @@ const StatusPage = React.lazy(() => import('./pages/StatusPage'));
 const DocsPage = React.lazy(() => import('./pages/DocsPage'));
 const SecurityPage = React.lazy(() => import('./pages/SecurityPage'));
 const ArenaPage = React.lazy(() => import('./pages/ArenaPage'));
+const PortfolioPage = React.lazy(() => import('./pages/PortfolioPage'));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 
 const Logout = () => {
@@ -170,6 +171,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/portfolio" element={<><SEO title="Portfolio" /><PortfolioPage /></>} />
                 <Route path="/docs" element={<DocsPage />} />
                 <Route path="/security" element={<SecurityPage />} />
                 <Route path="*" element={<><SEO title="404 Not Found" /><NotFoundPage /></>} />

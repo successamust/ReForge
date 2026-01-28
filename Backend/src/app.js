@@ -51,7 +51,17 @@ const limiter = rateLimit({
     legacyHeaders: false,
     skip: () => config.env === 'development' || config.env === 'test',
     store: new RedisStore({
-        sendCommand: (...args) => getRedisConnection().call(...args),
+        sendCommand: async (...args) => {
+            try {
+                const client = getRedisConnection();
+                return await client.call(...args);
+            } catch (error) {
+                logger.warn('Rate limiter Redis command failed:', error.message);
+                // Return a structure that prevents the library from crashing 
+                // while allowing the request to proceed (permissive mode)
+                return [1, Math.floor(Date.now() / 1000) + 60];
+            }
+        },
     }),
     message: {
         success: false,
@@ -61,6 +71,22 @@ const limiter = rateLimit({
         },
     },
 });
+
+app.get('/', (req, res) => {
+    res.json({ success: true, message: 'API is running' });
+});
+
+// Top-level health check (bypasses Redis-backed rate limiter)
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+        },
+    });
+});
+
 app.use('/v1', limiter);
 
 app.use(express.json({ limit: '1mb' }));

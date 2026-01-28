@@ -12,17 +12,6 @@ import arenaRoutes from './arena.routes.js';
 
 const router = Router();
 
-// Health check
-router.get('/health', (req, res) => {
-    res.json({
-        success: true,
-        data: {
-            status: 'healthy',
-            timestamp: new Date().toISOString(),
-        },
-    });
-});
-
 // Mount routes
 router.use('/auth', authRoutes);
 router.use('/lessons', lessonRoutes);
