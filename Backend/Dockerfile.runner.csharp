@@ -21,3 +21,4 @@ WORKDIR /sandbox
 
 # Default command (will be overridden)
 CMD ["dotnet", "--version"]
+
