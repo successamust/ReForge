@@ -159,7 +159,7 @@ const PortfolioPage = () => {
 
     const phoneNumber = '+2348167775155';
     const whatsappLink = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}`;
-    const cvLink = 'https://drive.google.com/file/d/1TqjYrDJTLyLBcrVILUlJiWRVt618AmMZ/view?usp=sharing';
+    const cvLink = 'https://drive.google.com/file/d/1TjQ5CzleJsqojH5IkqxsrpKZJwuvjF9X/view?usp=sharing';
 
     const nextProject = () => {
         setCurrentProjectIndex((prev) => (prev + 1) % projects.length);
